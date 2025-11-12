@@ -1,0 +1,51 @@
+.layout {
+  display: grid;
+  grid-template-columns: 300px 1fr; /* NAV izquierda - Contenido derecha */
+  gap: 20px;
+  padding: 20px;
+  align-items: start; /* Alinea verticalmente arriba */
+  min-height: calc(100vh - 60px);
+}
+
+/* Sidebar */
+.sidebar-container {
+  background: #000;
+  border-radius: 12px;
+  padding: 20px;
+  height: 92.5%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Contenido principal */
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Comparación resumen - técnico */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* Caja de métricas */
+.metrics-box {
+  border-radius: 12px;
+  border: 1px solid #eee;
+  padding: 20px;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+}
+
+.note {
+  font-size: 12px;
+  color: #888;
+  margin-top: 8px;
+}

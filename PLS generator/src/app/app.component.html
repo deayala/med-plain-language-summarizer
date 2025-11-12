@@ -1,0 +1,44 @@
+<!-- HEADER SUPERIOR -->
+<header class="card"
+        style="display:flex;justify-content:space-between;align-items:center;padding:16px;margin:16px;border-radius:16px;border:1px solid #e5e7eb;background:#fff">
+  <div style="display:flex;align-items:center;gap:12px">
+    <img src="assets/logo-uniandes.png" alt="Logo Uniandes" style="height:48px">
+    <div>
+      <div style="font-weight:800">PLS Generator – Health Literacy AI</div>
+      <a href="#" target="_blank" rel="noopener" style="font-size:12px;color:#2563eb">
+        Url al artículo final del proyecto
+      </a>
+    </div>
+  </div>
+  <div style="font-size:12px;color:#6b7280">Uniandes · Colombia</div>
+</header>
+
+<!-- LAYOUT: NAV IZQ + CONTENIDO DER -->
+<main class="page">
+  <aside class="sidebar-container">
+    <app-sidebar></app-sidebar>
+  </aside>
+
+  <section class="content">
+    <app-upload
+      [text]="original"
+      (textChange)="original = $event"
+      (generate)="generate()">
+    </app-upload>
+
+    <div class="compare">
+      <app-summary title="Texto técnico original" [text]="original"></app-summary>
+      <app-summary title="Resumen en lenguaje sencillo" [text]="summary" [isSummary]="true"></app-summary>
+    </div>
+
+    <div class="card" style="padding:16px;border-radius:16px;border:1px solid #e5e7eb;background:#fff">
+      <h2 style="margin-top:0">Calidad del resumen</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px">
+        <app-metrics title="Precisión del Contenido" variant="bar"   [value]="precision"   [note]="labelPrecision"></app-metrics>
+        <app-metrics title="Facilidad de lectura"     variant="gauge" [value]="readability" [note]="labelReadability" [colored]="true"></app-metrics>
+        <app-metrics title="Puntuación General de Legibilidad" variant="badge" [value]="overall" [note]="labelOverall"></app-metrics>
+      </div>
+      <p style="font-size:12px;color:#6b7280;margin-top:8px">*Valores simulados hasta integrar backend.</p>
+    </div>
+  </section>
+</main>

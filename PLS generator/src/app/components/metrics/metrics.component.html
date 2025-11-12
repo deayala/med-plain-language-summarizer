@@ -1,0 +1,49 @@
+<div class="metric-card">
+  <div class="metric-header">
+    <strong>{{ title }}</strong>
+    <!-- puntito decorativo -->
+    <span class="dot"></span>
+  </div>
+
+  <!-- ===== Variante: Barra ===== -->
+  <div *ngIf="variant === 'bar'">
+    <div class="progress">
+      <span [style.width.%]="value"></span>
+    </div>
+    <div class="row-bottom">
+      <span class="muted">{{ value }}%</span>
+      <span class="pill">{{ note }}</span>
+    </div>
+  </div>
+
+  <!-- ===== Variante: Gauge (anillo) ===== -->
+  <div *ngIf="variant === 'gauge'" class="gauge-row">
+    <div class="gauge">
+      <svg viewBox="0 0 80 80" width="80" height="80" aria-hidden="true">
+        <!-- anillo de fondo -->
+        <circle cx="40" cy="40" [attr.r]="r" class="track"/>
+        <!-- anillo de progreso -->
+        <circle
+          cx="40" cy="40" [attr.r]="r"
+          class="progress-ring"
+          [attr.stroke-dasharray]="circumference"
+          [attr.stroke-dashoffset]="dashOffset"
+          [attr.stroke]="ringColor"/>
+        <text x="40" y="46" text-anchor="middle" class="percent">{{ value }}%</text>
+      </svg>
+    </div>
+
+    <div class="gauge-text">
+      <div class="label-strong">{{ note.split('·')[0] || note }}</div>
+      <div class="muted">{{ note.includes('·') ? note.split('·')[1].trim() : '' }}</div>
+    </div>
+  </div>
+
+  <!-- ===== Variante: Badge (medalla) ===== -->
+  <div *ngIf="variant === 'badge'" class="badge-row">
+    <div class="medal">
+      <span>{{ note }}</span>
+    </div>
+    <div class="muted">{{ value }}%</div>
+  </div>
+</div>

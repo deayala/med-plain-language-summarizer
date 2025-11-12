@@ -1,0 +1,20 @@
+<div class="summary-card">
+  <div class="summary-header">
+    <h3>{{ title }}</h3>
+
+    <div class="actions" *ngIf="isSummary">
+      <button class="icon-btn" title="Copiar resumen" (click)="copy()">
+        📋
+      </button>
+      <button class="icon-btn" title="Descargar resumen" (click)="download()">
+        📥
+      </button>
+    </div>
+  </div>
+
+  <div class="summary-body">
+    <div class="summary-text">
+      {{ text || '—' }}
+    </div>
+  </div>
+</div>
