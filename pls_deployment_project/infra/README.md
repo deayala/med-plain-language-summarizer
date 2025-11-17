@@ -1,0 +1,1 @@
+Terraform stack that launches a single g5.xlarge Spot instance with Docker + NVIDIA runtime. Make sure the provided IAM instance profile has `AmazonS3ReadOnlyAccess` so user data can pull the AlignScore checkpoint from `s3://pls-deployment-artifacts/assets/alignscore/AlignScore-base.ckpt` (or whichever URI you supply via `alignscore_s3_uri`).

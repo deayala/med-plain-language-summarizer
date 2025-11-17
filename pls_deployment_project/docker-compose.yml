@@ -1,0 +1,24 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    image: pls-pls-api:latest
+    environment:
+      HF_ENDPOINT_URL: ${HF_ENDPOINT_URL:?set HF_ENDPOINT_URL}
+      HF_TOKEN: ${HF_TOKEN:?set HF_TOKEN}
+      DRY_RUN: ${DRY_RUN:-0}
+    ports:
+      - "8080:80"
+  alignscore:
+    build:
+      context: .
+      dockerfile: services/alignscore/Dockerfile
+    image: pls-alignscore:latest
+    environment:
+      ALIGN_MODEL_NAME: ${ALIGN_MODEL_NAME:-roberta-base}
+      ALIGN_BATCH_SIZE: ${ALIGN_BATCH_SIZE:-4}
+      ALIGN_DEVICE_PREFERENCE: ${ALIGN_DEVICE_PREFERENCE:-auto}
+      ALIGN_CHECKPOINT_PATH: ${ALIGN_CHECKPOINT_PATH:-}
+    ports:
+      - "8090:8090"

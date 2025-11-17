@@ -1,0 +1,10 @@
+services:
+  api:
+    image: ${API_IMAGE_URI:?set API_IMAGE_URI}
+    restart: always
+    environment:
+      HF_ENDPOINT_URL: ${HF_ENDPOINT_URL:?set HF_ENDPOINT_URL}
+      HF_TOKEN: ${HF_TOKEN:?set HF_TOKEN}
+      DRY_RUN: ${DRY_RUN:-0}
+    ports:
+      - "80:80"
