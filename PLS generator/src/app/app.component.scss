@@ -1,3 +1,10 @@
+.page {
+  display: flex;
+  flex-grow: 0;
+  gap: 20px;
+  padding-left: 20px;
+}
+
 .layout {
   display: grid;
   grid-template-columns: 300px 1fr; /* NAV izquierda - Contenido derecha */
@@ -12,9 +19,10 @@
   background: #000;
   border-radius: 12px;
   padding: 20px;
-  height: 92.5%;
+  height: 100%;
   display: flex;
   flex-direction: column;
+  width: 18vw;
 }
 
 /* Contenido principal */
@@ -22,6 +30,7 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  width: calc(83vw - 10px);
 }
 
 /* Comparación resumen - técnico */
@@ -48,4 +57,260 @@
   font-size: 12px;
   color: #888;
   margin-top: 8px;
+}
+/* ========= GRID DE MÉTRICAS ========= */
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)); /* 2 x 2 */
+  gap: 16px;
+}
+
+/* Tarjeta de cada métrica */
+.metric-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Encabezado de la tarjeta (icono + título) */
+.metric-header {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.metric-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.metric-header small {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+/* Icono redondo amarillo/negro */
+.metric-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #000;
+  color: #ffd200;
+  font-size: 14px;
+}
+
+/* Texto de valores */
+.metric-values {
+  font-size: 12px;
+}
+
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.metric-row span:first-child {
+  color: #6b7280;
+}
+
+.metric-row span:last-child {
+  font-weight: 600;
+}
+
+/* Barra horizontal (Factualidad / BERTScore) */
+.metric-bar {
+  margin-top: 6px;
+  height: 8px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+}
+
+.metric-bar.secondary {
+  background: #e0ecff;
+}
+
+.metric-bar-fill {
+  height: 100%;
+  background: #ffd200;
+  border-radius: 999px;
+}
+
+/* === Densidad del texto === */
+.density-bars {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.density-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.density-label {
+  font-size: 11px;
+  color: #6b7280;
+  width: 48px;
+}
+
+.density-track {
+  flex: 1;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.density-fill {
+  height: 100%;
+  background: #9ca3af;
+}
+
+.density-fill.generated {
+  background: #22c55e;
+}
+
+/* === Gauge de Readability === */
+.gauge {
+  margin-top: 8px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.gauge-inner {
+  width: 80px;
+  height: 80px;
+  border-radius: 999px;
+  border: 6px solid #e5e7eb;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 4px;
+}
+
+.gauge-value {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.gauge-label {
+  font-size: 9px;
+  color: #6b7280;
+}
+
+/* Colores del gauge según la clase que calcula el TS */
+.gauge-easy .gauge-inner {
+  border-color: #22c55e;
+}
+
+.gauge-medium .gauge-inner {
+  border-color: #facc15;
+}
+
+.gauge-hard .gauge-inner {
+  border-color: #ef4444;
+}
+
+/* Responsive: en pantallas pequeñas, 1 columna */
+@media (max-width: 900px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* === Readability layout específico === */
+
+.readability-card .metric-header {
+  margin-bottom: 8px;
+}
+
+.readability-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 8px;
+}
+
+/* Gauge + texto (lado izquierdo) */
+.readability-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.gauge-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 9999px;
+  border: 4px solid #facc15; /* amarillo */
+  background: #fef9c3; /* amarillo muy claro */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gauge-value {
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.readability-text .readability-strong {
+  font-weight: 600;
+}
+
+.readability-text .readability-sub {
+  font-size: 12px;
+  color: #4b5563;
+}
+
+/* Valores Inicial / Generado (lado derecho) */
+.readability-stats {
+  text-align: right;
+  font-size: 13px;
+}
+
+.readability-stats .label {
+  color: #6b7280;
+  margin-right: 4px;
+}
+
+.readability-stats .value {
+  font-weight: 600;
+}
+/* === Botón "Generar un nuevo resumen" === */
+
+.new-summary-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin: 10px 0 12px;
+}
+
+.new-summary-btn {
+  background: white;
+  border: 2px solid black;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.20s ease-in-out;
+}
+
+.new-summary-btn:hover {
+  background: black;
+  color: white;
+  transform: translateY(-2px);
 }
