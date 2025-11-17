@@ -47,17 +47,11 @@
     >
     </app-upload>
 
-    <!-- 🔁 BOTÓN PARA EMPEZAR UN NUEVO RESUMEN -->
-    <div
-      style="
-        display: flex;
-        justify-content: flex-end;
-        margin: 8px 0 4px;
-      "
-    >
+    <!-- 🔁 BOTÓN PARA EMPEZAR UN NUEVO RESUMEN (SOLO SI YA HAY ALGO) -->
+    <div *ngIf="summary || classificationLabel" class="new-summary-wrapper">
       <button
         type="button"
-        class="btn-secondary"
+        class="new-summary-btn"
         (click)="resetSummary()"
       >
         Generar un nuevo resumen
