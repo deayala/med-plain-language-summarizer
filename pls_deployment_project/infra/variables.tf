@@ -23,6 +23,10 @@ variable "image_uri_alignscore" {
   type = string
 }
 
+variable "image_uri_front" {
+  type = string
+}
+
 variable "compose_project" {
   type    = string
   default = "pls"
@@ -36,6 +40,11 @@ variable "host_port_api" {
 variable "host_port_alignscore" {
   type    = number
   default = 8443
+}
+
+variable "host_port_front" {
+  type    = number
+  default = 80
 }
 
 variable "hf_endpoint_url" {

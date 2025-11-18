@@ -20,3 +20,10 @@ services:
       - "${alignscore_ckpt_host_path}:${alignscore_ckpt_container_path}:ro"
     ports:
       - "${host_port_alignscore}:8090"
+  front:
+    image: ${image_uri_front}
+    restart: always
+    depends_on:
+      - api
+    ports:
+      - "${host_port_front}:80"

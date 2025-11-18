@@ -9,24 +9,29 @@ API_IMAGE=pls-pls-api
 API_TAG=latest
 ALIGN_IMAGE=pls-alignscore
 ALIGN_TAG=latest
+FRONT_IMAGE=pls-front
+FRONT_TAG=latest
 API_ECR_REPO=$(API_IMAGE)
 ALIGN_ECR_REPO=$(ALIGN_IMAGE)
+FRONT_ECR_REPO=$(FRONT_IMAGE)
 AWS_REGION?=us-east-1
 AWS_ACCOUNT_ID?=819245732164
 ECR_URI=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
 API_IMAGE_URI=$(ECR_URI)/$(API_ECR_REPO):$(API_TAG)
 ALIGN_IMAGE_URI=$(ECR_URI)/$(ALIGN_ECR_REPO):$(ALIGN_TAG)
+FRONT_IMAGE_URI=$(ECR_URI)/$(FRONT_ECR_REPO):$(FRONT_TAG)
 INSTANCE_TYPE?=t3.large
 INSTANCE_PROFILE_NAME?=LabInstanceProfile
 KEY_NAME?=PLS_DEPLOYMENT
 PROJECT_NAME=pls
 HOST_PORT_ALIGNSCORE?=8443
+HOST_PORT_FRONT?=80
 ALIGNSCORE_S3_URI?=s3://pls-deployment-artifacts/assets/alignscore/AlignScore-base.ckpt
 
 DOCKER_COMPOSE=docker compose
 
-.PHONY: help venv install serve docker-build-api docker-build-alignscore docker-run up down logs ps test checks clean \
- ecr-login ecr-create-api ecr-create-alignscore ecr-push-api ecr-push-alignscore ecr-push-all ec2-deploy ec2-destroy destroy-infra smoke
+.PHONY: help venv install serve docker-build-api docker-build-alignscore docker-build-front docker-run up down logs ps test checks clean \
+ ecr-login ecr-create-api ecr-create-alignscore ecr-create-front ecr-push-api ecr-push-alignscore ecr-push-front ecr-push-all ec2-deploy ec2-destroy destroy-infra smoke
 
 help:
 	@echo "PLS deployment helper targets"
@@ -35,9 +40,11 @@ help:
 	@echo "make test/checks               # tox wrappers"
 	@echo "make docker-build-api          # build inference image"
 	@echo "make docker-build-alignscore   # build AlignScore microservice image"
+	@echo "make docker-build-front        # build Angular front-end image"
 	@echo "make up/down                   # docker compose up/down"
 	@echo "make ecr-push-api              # push API image to ECR"
 	@echo "make ecr-push-alignscore       # push AlignScore image to ECR"
+	@echo "make ecr-push-front            # push front-end image to ECR"
 	@echo "make ec2-deploy                # terraform apply targeting CPU t3.large"
 	@echo "make destroy-infra             # terraform destroy for all infra resources"
 
@@ -60,6 +67,9 @@ docker-build-api:
 
 docker-build-alignscore:
 	docker build --build-arg BUILDKIT_INLINE_CACHE=1 -t $(ALIGN_IMAGE):$(ALIGN_TAG) -f services/alignscore/Dockerfile .
+
+docker-build-front:
+	docker build --build-arg BUILDKIT_INLINE_CACHE=1 -t $(FRONT_IMAGE):$(FRONT_TAG) -f front/Dockerfile front
 
 up:
 	$(DOCKER_COMPOSE) up -d
@@ -98,6 +108,10 @@ ecr-create-alignscore:
 	-aws ecr describe-repositories --repository-names $(ALIGN_ECR_REPO) --region $(AWS_REGION) >/dev/null 2>&1 || \
 	  aws ecr create-repository --repository-name $(ALIGN_ECR_REPO) --region $(AWS_REGION)
 
+ecr-create-front:
+	-aws ecr describe-repositories --repository-names $(FRONT_ECR_REPO) --region $(AWS_REGION) >/dev/null 2>&1 || \
+	  aws ecr create-repository --repository-name $(FRONT_ECR_REPO) --region $(AWS_REGION)
+
 ecr-push-api: docker-build-api ecr-create-api ecr-login
 	docker tag $(API_IMAGE):$(API_TAG) $(API_IMAGE_URI)
 	docker push $(API_IMAGE_URI)
@@ -106,9 +120,14 @@ ecr-push-alignscore: docker-build-alignscore ecr-create-alignscore ecr-login
 	docker tag $(ALIGN_IMAGE):$(ALIGN_TAG) $(ALIGN_IMAGE_URI)
 	docker push $(ALIGN_IMAGE_URI)
 
-ecr-push-all: ecr-push-api ecr-push-alignscore
+ecr-push-front: docker-build-front ecr-create-front ecr-login
+	docker tag $(FRONT_IMAGE):$(FRONT_TAG) $(FRONT_IMAGE_URI)
+	docker push $(FRONT_IMAGE_URI)
+
+ecr-push-all: ecr-push-api ecr-push-alignscore ecr-push-front
 	@echo "Pushed API -> $(API_IMAGE_URI)"
 	@echo "Pushed AlignScore -> $(ALIGN_IMAGE_URI)"
+	@echo "Pushed Front -> $(FRONT_IMAGE_URI)"
 
 # ---------- Terraform ----------
 ec2-deploy:
@@ -120,8 +139,10 @@ ec2-deploy:
 		-var "key_name=$(KEY_NAME)" \
 		-var "image_uri_api=$(API_IMAGE_URI)" \
 		-var "image_uri_alignscore=$(ALIGN_IMAGE_URI)" \
+		-var "image_uri_front=$(FRONT_IMAGE_URI)" \
 		-var "host_port_api=443" \
 		-var "host_port_alignscore=$(HOST_PORT_ALIGNSCORE)" \
+		-var "host_port_front=$(HOST_PORT_FRONT)" \
 		-var "compose_project=$(PROJECT_NAME)" \
 		-var "hf_endpoint_url=$(HF_ENDPOINT_URL)" \
 		-var "hf_token=$(HF_TOKEN)" \
@@ -138,8 +159,10 @@ destroy-infra:
 		-var "key_name=$(KEY_NAME)" \
 		-var "image_uri_api=$(API_IMAGE_URI)" \
 		-var "image_uri_alignscore=$(ALIGN_IMAGE_URI)" \
+		-var "image_uri_front=$(FRONT_IMAGE_URI)" \
 		-var "host_port_api=443" \
 		-var "host_port_alignscore=$(HOST_PORT_ALIGNSCORE)" \
+		-var "host_port_front=$(HOST_PORT_FRONT)" \
 		-var "compose_project=$(PROJECT_NAME)" \
 		-var "hf_endpoint_url=$(HF_ENDPOINT_URL)" \
 		-var "hf_token=$(HF_TOKEN)" \

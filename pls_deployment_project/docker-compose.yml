@@ -22,3 +22,12 @@ services:
       ALIGN_CHECKPOINT_PATH: ${ALIGN_CHECKPOINT_PATH:-}
     ports:
       - "8090:8090"
+  front:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    image: pls-front:latest
+    depends_on:
+      - api
+    ports:
+      - "4173:80"

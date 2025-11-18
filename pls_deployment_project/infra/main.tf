@@ -16,8 +16,10 @@ locals {
   docker_compose_yaml = templatefile("${path.module}/docker-compose.yml.tftpl", {
     image_uri_api                  = var.image_uri_api,
     image_uri_alignscore           = var.image_uri_alignscore,
+    image_uri_front                = var.image_uri_front,
     host_port_api                  = var.host_port_api,
     host_port_alignscore           = var.host_port_alignscore,
+    host_port_front                = var.host_port_front,
     hf_endpoint_url                = var.hf_endpoint_url,
     hf_token                       = var.hf_token,
     alignscore_ckpt_host_path      = var.alignscore_ckpt_host_path,
@@ -82,10 +84,12 @@ resource "aws_instance" "pls_g5" {
   user_data = templatefile("${path.module}/user_data.sh.tftpl", {
     image_uri_api                  = var.image_uri_api,
     image_uri_alignscore           = var.image_uri_alignscore,
+    image_uri_front                = var.image_uri_front,
     image_registry                 = split("/", var.image_uri_api)[0],
     compose_project                = var.compose_project,
     host_port_api                  = var.host_port_api,
     host_port_alignscore           = var.host_port_alignscore,
+    host_port_front                = var.host_port_front,
     hf_endpoint_url                = var.hf_endpoint_url,
     hf_token                       = var.hf_token,
     aws_region                     = var.aws_region,

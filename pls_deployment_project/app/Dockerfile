@@ -6,7 +6,10 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PIP_NO_CACHE_DIR=1
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends python3.11 python3.11-venv python3-pip git curl && \
+    apt-get install -y --no-install-recommends software-properties-common git curl && \
+    add-apt-repository ppa:deadsnakes/ppa -y && \
+    apt-get install -y --no-install-recommends python3.11 python3.11-venv python3.11-distutils python3-pip && \
+    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 2 && \
     rm -rf /var/lib/apt/lists/*
 
 RUN useradd -m api-user
