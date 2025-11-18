@@ -24,7 +24,8 @@ INSTANCE_TYPE?=t3.large
 INSTANCE_PROFILE_NAME?=LabInstanceProfile
 KEY_NAME?=PLS_DEPLOYMENT
 PROJECT_NAME=pls
-HOST_PORT_ALIGNSCORE?=8443
+HOST_PORT_API?=8080
+HOST_PORT_ALIGNSCORE?=8081
 HOST_PORT_FRONT?=80
 ALIGNSCORE_S3_URI?=s3://pls-deployment-artifacts/assets/alignscore/AlignScore-base.ckpt
 
@@ -140,7 +141,7 @@ ec2-deploy:
 		-var "image_uri_api=$(API_IMAGE_URI)" \
 		-var "image_uri_alignscore=$(ALIGN_IMAGE_URI)" \
 		-var "image_uri_front=$(FRONT_IMAGE_URI)" \
-		-var "host_port_api=443" \
+		-var "host_port_api=$(HOST_PORT_API)" \
 		-var "host_port_alignscore=$(HOST_PORT_ALIGNSCORE)" \
 		-var "host_port_front=$(HOST_PORT_FRONT)" \
 		-var "compose_project=$(PROJECT_NAME)" \
@@ -160,7 +161,7 @@ destroy-infra:
 		-var "image_uri_api=$(API_IMAGE_URI)" \
 		-var "image_uri_alignscore=$(ALIGN_IMAGE_URI)" \
 		-var "image_uri_front=$(FRONT_IMAGE_URI)" \
-		-var "host_port_api=443" \
+		-var "host_port_api=$(HOST_PORT_API)" \
 		-var "host_port_alignscore=$(HOST_PORT_ALIGNSCORE)" \
 		-var "host_port_front=$(HOST_PORT_FRONT)" \
 		-var "compose_project=$(PROJECT_NAME)" \

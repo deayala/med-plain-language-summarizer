@@ -7,7 +7,7 @@ services:
       HF_TOKEN: ${HF_TOKEN:?set HF_TOKEN}
       DRY_RUN: ${DRY_RUN:-0}
     ports:
-      - "${API_HOST_PORT:-443}:80"
+      - "${API_HOST_PORT:-8080}:80"
   alignscore:
     image: ${ALIGNSCORE_IMAGE_URI:?set ALIGNSCORE_IMAGE_URI}
     restart: always
@@ -19,7 +19,7 @@ services:
     volumes:
       - "${ALIGN_CHECKPOINT_HOST_PATH:?set ALIGN_CHECKPOINT_HOST_PATH}:${ALIGN_CHECKPOINT_PATH:-/assets/AlignScore-base.ckpt}:ro"
     ports:
-      - "${ALIGNSCORE_HOST_PORT:-8443}:8090"
+      - "${ALIGNSCORE_HOST_PORT:-8081}:8090"
   front:
     image: ${FRONT_IMAGE_URI:?set FRONT_IMAGE_URI}
     restart: always

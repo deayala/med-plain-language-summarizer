@@ -40,13 +40,13 @@ data "aws_subnets" "default" {
 
 resource "aws_security_group" "pls_api" {
   name_prefix = "pls-api-"
-  description = "Allow HTTPS"
+  description = "Allow HTTP ingress"
   vpc_id      = data.aws_vpc.default.id
 
   ingress {
-    description = "HTTPS"
-    from_port   = 443
-    to_port     = 443
+    description = "API HTTP"
+    from_port   = var.host_port_api
+    to_port     = var.host_port_api
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -54,6 +54,13 @@ resource "aws_security_group" "pls_api" {
     description = "AlignScore HTTPS"
     from_port   = var.host_port_alignscore
     to_port     = var.host_port_alignscore
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    description = "Frontend HTTP"
+    from_port   = var.host_port_front
+    to_port     = var.host_port_front
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }

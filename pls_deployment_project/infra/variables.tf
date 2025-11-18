@@ -34,12 +34,12 @@ variable "compose_project" {
 
 variable "host_port_api" {
   type    = number
-  default = 443
+  default = 8080
 }
 
 variable "host_port_alignscore" {
   type    = number
-  default = 8443
+  default = 8081
 }
 
 variable "host_port_front" {

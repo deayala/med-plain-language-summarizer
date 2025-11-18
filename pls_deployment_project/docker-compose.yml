@@ -21,7 +21,7 @@ services:
       ALIGN_DEVICE_PREFERENCE: ${ALIGN_DEVICE_PREFERENCE:-auto}
       ALIGN_CHECKPOINT_PATH: ${ALIGN_CHECKPOINT_PATH:-}
     ports:
-      - "8090:8090"
+      - "8081:8090"
   front:
     build:
       context: ./front
@@ -30,4 +30,4 @@ services:
     depends_on:
       - api
     ports:
-      - "4173:80"
+      - "80:80"
