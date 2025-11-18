@@ -140,8 +140,7 @@ resetSummary() {
     this.factualityInitial = 100;
     this.factualityGenerated = this.percentFrom(generated?.number_recall ?? 1);
 
-    this.bertInitial = 1;
-    this.bertGenerated = this.unitScore(generated?.number_recall ?? 1);
+    this.alignScoreGenerated = this.unitScore(generated?.number_recall ?? 1);
 
     this.readabilityInitial = source?.flesch_reading_ease ?? 0;
     this.readabilityGenerated = generated?.flesch_reading_ease ?? 0;
