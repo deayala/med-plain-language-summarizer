@@ -124,11 +124,17 @@
         title="Texto técnico original"
         [text]="original"
       ></app-summary>
-      <app-summary
-        title="Resumen en lenguaje sencillo"
-        [text]="summary"
-        [isSummary]="true"
-      ></app-summary>
+      <div class="summary-panel">
+        <app-summary
+          title="Resumen en lenguaje sencillo"
+          [text]="summary"
+          [isSummary]="true"
+        ></app-summary>
+        <div class="loading-overlay" *ngIf="isSummarizing">
+          <div class="spinner"></div>
+          <span>Generando resumen…</span>
+        </div>
+      </div>
     </div>
 
     <!-- ========================================================= -->
@@ -242,24 +248,39 @@
           <div class="metric-header">
             <span class="metric-icon">🧠</span>
             <div>
-              <h3>Factualidad</h3>
-              <small>Consistencia entre texto original y resumen medida por medio de AlignScore.</small>
+              <h3>AlignScore</h3>
+              <small>Factualidad entre el texto técnico y el resumen.</small>
             </div>
           </div>
 
-          <div class="metric-values">
-            <div class="metric-row">
-              <span>Generado</span>
-              <span>{{ alignScoreGenerated | number : '1.3-3' }}</span>
-            </div>
+          <div *ngIf="isAlignScoring" class="metric-loading">
+            <div class="spinner small"></div>
+            <span>Calculando AlignScore…</span>
           </div>
 
-          <div class="metric-bar secondary">
-            <div
-              class="metric-bar-fill"
-              [style.width.%]="alignScoreGenerated * 100"
-            ></div>
-          </div>
+          <ng-container *ngIf="!isAlignScoring">
+            <div class="metric-values">
+              <div class="metric-row">
+                <span>Generado</span>
+                <span>
+                  {{
+                    (alignScoreGenerated ?? 0) | number : '1.3-3'
+                  }}
+                </span>
+              </div>
+              <div class="metric-row" *ngIf="alignScoreModel">
+                <span>Modelo</span>
+                <span>{{ alignScoreModel }}</span>
+              </div>
+            </div>
+
+            <div class="metric-bar secondary">
+              <div
+                class="metric-bar-fill"
+                [style.width.%]="(alignScoreGenerated ?? 0) * 100"
+              ></div>
+            </div>
+          </ng-container>
         </div>
        
       </div>

@@ -40,6 +40,45 @@
   gap: 20px;
 }
 
+.summary-panel {
+  position: relative;
+}
+
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.92);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 12px;
+  font-size: 13px;
+  color: #1f2937;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid #d1d5db;
+  border-top-color: #2563eb;
+  animation: spin 1s linear infinite;
+}
+
+.spinner.small {
+  width: 20px;
+  height: 20px;
+  border-width: 2px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Caja de métricas */
 .metrics-box {
   border-radius: 12px;
@@ -142,6 +181,15 @@
   height: 100%;
   background: #ffd200;
   border-radius: 999px;
+}
+
+.metric-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #2563eb;
+  margin-top: 8px;
 }
 
 /* === Densidad del texto === */

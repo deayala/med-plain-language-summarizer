@@ -40,6 +40,9 @@ export class AppComponent {
   // ====== BERTScore ======
   bertInitial   = 0;
   bertGenerated = 0;
+  alignScoreGenerated: number | null = null;
+  alignScoreModel: string | null = null;
+  isAlignScoring = false;
 
   // ====== Densidad del texto ======
   wordsInitial    = 0;
@@ -86,6 +89,9 @@ export class AppComponent {
 
     if (this.classificationLabel === 'PLS') {
       this.summary = '';
+      this.alignScoreGenerated = null;
+      this.alignScoreModel = null;
+      this.isAlignScoring = false;
       return;
     }
 
@@ -93,6 +99,7 @@ export class AppComponent {
     try {
       const result = await this.api.summarize(payload);
       this.applySummary(result);
+      await this.applyAlignScore(payload, result.summary);
     } catch (error) {
       console.error('Summarization failed', error);
       this.classificationMessage =
@@ -103,28 +110,31 @@ export class AppComponent {
     }
   }
 
-resetSummary() {
-  this.original = '';
-  this.summary = '';
-  this.classificationLabel = null;
-  this.classificationScore = null;
-  this.classificationMessage = '';
-  this.isClassifying = false;
-  this.isSummarizing = false;
+  resetSummary() {
+    this.original = '';
+    this.summary = '';
+    this.classificationLabel = null;
+    this.classificationScore = null;
+    this.classificationMessage = '';
+    this.isClassifying = false;
+    this.isSummarizing = false;
 
-  this.factualityInitial   = 0;
-  this.factualityGenerated = 0;
-  this.bertInitial   = 0;
-  this.bertGenerated = 0;
-  this.wordsInitial   = 0;
-  this.wordsGenerated = 0;
-  this.charsInitial   = 0;
-  this.charsGenerated = 0;
-  this.readabilityInitial   = 0;
-  this.readabilityGenerated = 0;
-  this.readabilityValue     = 0;
-  this.readabilityLabel     = 'Sin datos – Agrega un texto para evaluarlo';
-}
+    this.factualityInitial = 0;
+    this.factualityGenerated = 0;
+    this.bertInitial = 0;
+    this.bertGenerated = 0;
+    this.alignScoreGenerated = null;
+    this.alignScoreModel = null;
+    this.isAlignScoring = false;
+    this.wordsInitial = 0;
+    this.wordsGenerated = 0;
+    this.charsInitial = 0;
+    this.charsGenerated = 0;
+    this.readabilityInitial = 0;
+    this.readabilityGenerated = 0;
+    this.readabilityValue = 0;
+    this.readabilityLabel = 'Sin datos – Agrega un texto para evaluarlo';
+  }
 
   private applySummary(response: SummaryResponse) {
     this.summary = response.summary;
@@ -140,12 +150,34 @@ resetSummary() {
     this.factualityInitial = 100;
     this.factualityGenerated = this.percentFrom(generated?.number_recall ?? 1);
 
-    this.alignScoreGenerated = this.unitScore(generated?.number_recall ?? 1);
-
     this.readabilityInitial = source?.flesch_reading_ease ?? 0;
     this.readabilityGenerated = generated?.flesch_reading_ease ?? 0;
     this.readabilityValue = this.percentFrom(this.readabilityGenerated / 100);
     this.readabilityLabel = this.describeReadability(this.readabilityGenerated);
+
+    this.alignScoreGenerated = null;
+    this.alignScoreModel = null;
+    this.isAlignScoring = false;
+  }
+
+  private async applyAlignScore(source: string, summary: string): Promise<void> {
+    const technical = source.trim();
+    const generation = summary.trim();
+    if (!technical || !generation) {
+      this.alignScoreGenerated = null;
+      return;
+    }
+    this.isAlignScoring = true;
+    try {
+      const response = await this.api.alignScore(technical, generation);
+      this.alignScoreGenerated = response.align_score;
+      this.alignScoreModel = response.model_name;
+    } catch (error) {
+      console.error('AlignScore failed', error);
+      this.alignScoreGenerated = null;
+    } finally {
+      this.isAlignScoring = false;
+    }
   }
 
   private countWords(text: string): number {
