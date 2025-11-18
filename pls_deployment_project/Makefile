@@ -130,20 +130,20 @@ ec2-deploy:
 ec2-destroy:
 	terraform -chdir=infra destroy -auto-approve -var "aws_region=$(AWS_REGION)"
 
-	destroy-infra:
-		terraform -chdir=infra destroy -auto-approve \
-			-var "aws_region=$(AWS_REGION)" \
-			-var "instance_type=$(INSTANCE_TYPE)" \
-			-var "instance_profile_name=$(INSTANCE_PROFILE_NAME)" \
-			-var "key_name=$(KEY_NAME)" \
-			-var "image_uri_api=$(API_IMAGE_URI)" \
-			-var "image_uri_alignscore=$(ALIGN_IMAGE_URI)" \
-			-var "host_port_api=443" \
-			-var "host_port_alignscore=$(HOST_PORT_ALIGNSCORE)" \
-			-var "compose_project=$(PROJECT_NAME)" \
-			-var "hf_endpoint_url=$(HF_ENDPOINT_URL)" \
-			-var "hf_token=$(HF_TOKEN)" \
-			-var "alignscore_s3_uri=$(ALIGNSCORE_S3_URI)"
+destroy-infra:
+	terraform -chdir=infra destroy -auto-approve \
+		-var "aws_region=$(AWS_REGION)" \
+		-var "instance_type=$(INSTANCE_TYPE)" \
+		-var "instance_profile_name=$(INSTANCE_PROFILE_NAME)" \
+		-var "key_name=$(KEY_NAME)" \
+		-var "image_uri_api=$(API_IMAGE_URI)" \
+		-var "image_uri_alignscore=$(ALIGN_IMAGE_URI)" \
+		-var "host_port_api=443" \
+		-var "host_port_alignscore=$(HOST_PORT_ALIGNSCORE)" \
+		-var "compose_project=$(PROJECT_NAME)" \
+		-var "hf_endpoint_url=$(HF_ENDPOINT_URL)" \
+		-var "hf_token=$(HF_TOKEN)" \
+		-var "alignscore_s3_uri=$(ALIGNSCORE_S3_URI)"
 
 clean:
 	rm -rf $(VENV) .pytest_cache .mypy_cache __pycache__

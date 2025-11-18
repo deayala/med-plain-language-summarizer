@@ -47,7 +47,8 @@ variable "hf_token" {
 }
 
 variable "alignscore_s3_uri" {
-  type = string
+  type    = string
+  default = "s3://pls-deployment-artifacts/assets/alignscore/AlignScore-base.ckpt"
 }
 
 variable "alignscore_ckpt_host_path" {

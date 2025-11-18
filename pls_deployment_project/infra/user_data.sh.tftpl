@@ -62,28 +62,7 @@ PROJECT_DIR="/opt/${compose_project}"
 install -d -o root -g root -m 755 "$PROJECT_DIR"
 
 cat <<'COMPOSE' > "$PROJECT_DIR/docker-compose.yml"
-services:
-  api:
-    image: ${image_uri_api}
-    restart: always
-    environment:
-      HF_ENDPOINT_URL: ${hf_endpoint_url}
-      HF_TOKEN: ${hf_token}
-      DRY_RUN: 0
-    ports:
-      - "${host_port_api}:80"
-  alignscore:
-    image: ${image_uri_alignscore}
-    restart: always
-    environment:
-      ALIGN_MODEL_NAME: roberta-base
-      ALIGN_BATCH_SIZE: 4
-      ALIGN_DEVICE_PREFERENCE: auto
-      ALIGN_CHECKPOINT_PATH: ${alignscore_ckpt_container_path}
-    volumes:
-      - "${alignscore_ckpt_host_path}:${alignscore_ckpt_container_path}:ro"
-    ports:
-      - "${host_port_alignscore}:8090"
+${docker_compose_yaml}
 COMPOSE
 
 cd "$PROJECT_DIR"

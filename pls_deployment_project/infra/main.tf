@@ -12,6 +12,19 @@ provider "aws" {
   region = var.aws_region
 }
 
+locals {
+  docker_compose_yaml = templatefile("${path.module}/docker-compose.yml.tftpl", {
+    image_uri_api                  = var.image_uri_api,
+    image_uri_alignscore           = var.image_uri_alignscore,
+    host_port_api                  = var.host_port_api,
+    host_port_alignscore           = var.host_port_alignscore,
+    hf_endpoint_url                = var.hf_endpoint_url,
+    hf_token                       = var.hf_token,
+    alignscore_ckpt_host_path      = var.alignscore_ckpt_host_path,
+    alignscore_ckpt_container_path = var.alignscore_ckpt_container_path
+  })
+}
+
 data "aws_vpc" "default" {
   default = true
 }
@@ -59,26 +72,27 @@ resource "aws_instance" "pls_g5" {
   iam_instance_profile        = var.instance_profile_name
   key_name                    = var.key_name
   associate_public_ip_address = true
- # instance_market_options {
- #   market_type = "spot"
- #   spot_options {
- #     instance_interruption_behavior = "terminate"
- #     spot_instance_type             = "one-time"
- #   }
- # }
-  user_data                   = templatefile("${path.module}/user_data.sh.tftpl", {
-    image_uri_api               = var.image_uri_api,
-    image_uri_alignscore        = var.image_uri_alignscore,
-    image_registry              = split("/", var.image_uri_api)[0],
-    compose_project             = var.compose_project,
-    host_port_api               = var.host_port_api,
-    host_port_alignscore        = var.host_port_alignscore,
-    hf_endpoint_url             = var.hf_endpoint_url,
-    hf_token                    = var.hf_token,
-    aws_region                  = var.aws_region,
-    alignscore_s3_uri           = var.alignscore_s3_uri,
-    alignscore_ckpt_host_path   = var.alignscore_ckpt_host_path,
-    alignscore_ckpt_container_path = var.alignscore_ckpt_container_path
+  # instance_market_options {
+  #   market_type = "spot"
+  #   spot_options {
+  #     instance_interruption_behavior = "terminate"
+  #     spot_instance_type             = "one-time"
+  #   }
+  # }
+  user_data = templatefile("${path.module}/user_data.sh.tftpl", {
+    image_uri_api                  = var.image_uri_api,
+    image_uri_alignscore           = var.image_uri_alignscore,
+    image_registry                 = split("/", var.image_uri_api)[0],
+    compose_project                = var.compose_project,
+    host_port_api                  = var.host_port_api,
+    host_port_alignscore           = var.host_port_alignscore,
+    hf_endpoint_url                = var.hf_endpoint_url,
+    hf_token                       = var.hf_token,
+    aws_region                     = var.aws_region,
+    alignscore_s3_uri              = var.alignscore_s3_uri,
+    alignscore_ckpt_host_path      = var.alignscore_ckpt_host_path,
+    alignscore_ckpt_container_path = var.alignscore_ckpt_container_path,
+    docker_compose_yaml            = local.docker_compose_yaml
   })
 
   root_block_device {
