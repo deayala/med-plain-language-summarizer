@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Callable
+from typing import Any, Callable
 
 import requests
 
@@ -64,6 +64,72 @@ class HFInferenceClient:
         return str(data)
 
 
+class OpenAIChatClient:
+    """Minimal OpenAI-compatible client (used by vLLM /chat/completions endpoints)."""
+
+    def __init__(self, url: str, token: str | None, model_name: str, timeout: int):
+        if not url:
+            raise ValueError("Chat endpoint URL is required")
+        if not model_name:
+            raise ValueError("hf_chat_model_name must be configured")
+        self.url = url
+        self.token = token
+        self.model_name = model_name
+        self.timeout = timeout
+
+    def generate(self, system_prompt: str, article: str, overrides: GenerationDefaults) -> str:
+        headers = {"Content-Type": "application/json"}
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
+        payload = {
+            "model": self.model_name,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": article},
+            ],
+            "max_tokens": overrides.max_new_tokens,
+            "temperature": overrides.temperature,
+            "top_p": overrides.top_p,
+            "n": 1,
+        }
+        resp = requests.post(self.url, headers=headers, json=payload, timeout=self.timeout)
+        resp.raise_for_status()
+        data = resp.json()
+        return self._extract_text(data)
+
+    def _extract_text(self, payload: Any) -> str:
+        if isinstance(payload, dict):
+            choices = payload.get("choices")
+            if isinstance(choices, list):
+                for choice in choices:
+                    text = self._choice_text(choice)
+                    if text:
+                        return text
+        raise ValueError("Unexpected payload from OpenAI-compatible endpoint")
+
+    def _choice_text(self, choice: Any) -> str | None:
+        if not isinstance(choice, dict):
+            return None
+        message = choice.get("message")
+        if isinstance(message, dict):
+            content = message.get("content")
+            if isinstance(content, str):
+                return content
+            if isinstance(content, list):
+                parts: list[str] = []
+                for part in content:
+                    if isinstance(part, dict):
+                        text = part.get("text")
+                        if isinstance(text, str):
+                            parts.append(text)
+                if parts:
+                    return "".join(parts)
+        text = choice.get("text")
+        if isinstance(text, str):
+            return text
+        return None
+
+
 class DummyGenerator:
     """Fallback to keep CI fast when artifacts are missing."""
 
@@ -85,16 +151,25 @@ class PLSGenerator:
         self.settings = settings
         self.generator_name = "dry-run"
         self._remote_client: HFInferenceClient | None = None
+        self._chat_client: OpenAIChatClient | None = None
         self._driver: Callable[[str], str] = DummyGenerator(SYS_PROMPT)
         if settings.dry_run:
             return
         if not settings.hf_endpoint_url:
             raise RuntimeError("HF_ENDPOINT_URL must be configured when DRY_RUN=0")
-        self._remote_client = HFInferenceClient(
-            url=settings.hf_endpoint_url,
-            token=settings.hf_token,
-            timeout=settings.hf_request_timeout,
-        )
+        if self._is_chat_endpoint(settings.hf_endpoint_url):
+            self._chat_client = OpenAIChatClient(
+                url=settings.hf_endpoint_url,
+                token=settings.hf_token,
+                model_name=settings.hf_chat_model_name,
+                timeout=settings.hf_request_timeout,
+            )
+        else:
+            self._remote_client = HFInferenceClient(
+                url=settings.hf_endpoint_url,
+                token=settings.hf_token,
+                timeout=settings.hf_request_timeout,
+            )
         self.generator_name = "hf-endpoint"
 
     # ---------------- Public API ----------------
@@ -107,10 +182,14 @@ class PLSGenerator:
         return max(candidates, key=lambda cand: cand.score)
 
     def _generate_once(self, article: str, overrides: GenerationDefaults) -> Candidate:
-        if self.generator_name == "dry-run" or self._remote_client is None:
+        if self.generator_name == "dry-run":
             text = self._driver(article)
-        else:
+        elif self._chat_client is not None:
+            text = self._generate_chat(article, overrides)
+        elif self._remote_client is not None:
             text = self._generate_remote(article, overrides)
+        else:
+            text = self._driver(article)
         metrics = ReadabilityMetrics(**readability_for_summary(article, text))
         return Candidate(text=text, score=self._margin(metrics), metrics=metrics)
 
@@ -119,6 +198,11 @@ class PLSGenerator:
             raise RuntimeError("Remote inference requested but client not initialized")
         prompt = self._build_prompt(article)
         return self._clean_text(self._remote_client.generate(prompt, overrides))
+
+    def _generate_chat(self, article: str, overrides: GenerationDefaults) -> str:
+        if self._chat_client is None:
+            raise RuntimeError("Chat inference requested but client not initialized")
+        return self._clean_text(self._chat_client.generate(SYS_PROMPT, article, overrides))
 
     @staticmethod
     def _build_prompt(article: str) -> str:
@@ -152,6 +236,11 @@ class PLSGenerator:
             margin = value - thr if mode == "min" else thr - value
             score += margin
         return score
+
+    @staticmethod
+    def _is_chat_endpoint(url: str) -> bool:
+        normalized = url.lower()
+        return "/chat/completions" in normalized or "/v1/completions" in normalized
 
 
 if __name__ == "__main__":  # pragma: no cover

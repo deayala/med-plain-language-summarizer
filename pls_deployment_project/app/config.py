@@ -42,6 +42,7 @@ class Settings(BaseSettings):
     hf_token: str | None = Field(default=None)
     hf_endpoint_url: str | None = Field(default=None)
     hf_request_timeout: int = Field(default=60, ge=5, le=180)
+    hf_chat_model_name: str = Field(default="deayala/med-gemma-finetuned")
 
     allowed_origins: List[str] = Field(default_factory=lambda: ["*"])
     generation: GenerationDefaults = Field(default_factory=GenerationDefaults)
@@ -59,6 +60,7 @@ class Settings(BaseSettings):
         return {
             "hf_endpoint": bool(self.hf_endpoint_url),
             "dry_run": self.dry_run,
+            "hf_chat_model": self.hf_chat_model_name,
         }
 
 

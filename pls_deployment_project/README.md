@@ -34,6 +34,8 @@ Each Python module contains a lightweight validation section (`if __name__ == "_
    export AWS_REGION=us-east-1
    export HF_TOKEN=hf_xxx
     export HF_ENDPOINT_URL=https://xxx.aws.endpoints.huggingface.cloud
+   # Optional: required only for OpenAI-compatible chat endpoints
+   export HF_CHAT_MODEL_NAME=deayala/med-gemma-finetuned
    ```
 2. **Create virtualenv and install deps**
    ```bash
@@ -62,6 +64,8 @@ Each Python module contains a lightweight validation section (`if __name__ == "_
    make ec2-deploy INSTANCE_TYPE=t3.large
    ```
 
+> **Tip:** If `HF_ENDPOINT_URL` points to an OpenAI-compatible chat endpoint such as `vllm/vllm-openai` (`.../v1/chat/completions`), the API automatically switches to that payload and uses `HF_CHAT_MODEL_NAME` as the `model` parameter. No additional settings are required.
+
 ## Validations
 - `app/config.py`: validates env vars + file paths on import.
 - `app/generator.py`: runs device + dtype checks, exposes `/validate` endpoint for smoke testing.
@@ -69,7 +73,7 @@ Each Python module contains a lightweight validation section (`if __name__ == "_
 - Terraform user-data runs `docker compose ps` to ensure the stack is healthy before finishing cloud-init.
 
 ## API surface
-- `POST /api/v1/summarize`: calls the managed HF endpoint and returns the generated PLS plus a Pydantic `ReadabilityBreakdown` with metrics for both the source article and generated PLS (Flesch, FKGL, Coleman-Liau, SMOG, Gunning Fog, Dale-Chall, average words per sentence, compression ratio, number recall, repetition ratio, jargon density).
+- `POST /api/v1/summarize`: calls the managed HF endpoint (including OpenAI-compatible chat endpoints) and returns the generated PLS plus a Pydantic `ReadabilityBreakdown` with metrics for both the source article and generated PLS (Flesch, FKGL, Coleman-Liau, SMOG, Gunning Fog, Dale-Chall, average words per sentence, compression ratio, number recall, repetition ratio, jargon density).
 - `POST /api/v1/classify`: loads `models/production/tfidf_logreg/model.joblib` to return whether an arbitrary text already looks like a PLS (`pls` vs `non_pls`) together with the probability score and threshold used.
 - `POST /api/v1/classify/batch`: bulk classification (up to 128 snippets) backed by the same TF-IDF + logistic regression pipeline.
 
