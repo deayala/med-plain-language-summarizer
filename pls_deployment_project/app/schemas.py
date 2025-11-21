@@ -79,22 +79,3 @@ class ClassifiedText(BaseModel):
 
 class ClassificationResponse(ClassifiedText):
     ...
-
-
-class BulkClassificationRequest(BaseModel):
-    texts: list[str] = Field(..., min_length=1, max_length=128)
-
-    @field_validator("texts")
-    @classmethod
-    def validate_entries(cls, payload: list[str]) -> list[str]:  # type: ignore[override]
-        cleaned = []
-        for text in payload:
-            stripped = text.strip()
-            if len(stripped.split()) < 5:
-                raise ValueError("Each text must include at least five words")
-            cleaned.append(stripped)
-        return cleaned
-
-
-class BulkClassificationResponse(BaseModel):
-    results: list[ClassifiedText]

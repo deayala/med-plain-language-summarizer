@@ -42,16 +42,3 @@ def test_classify_single_text():
     payload = response.json()
     assert payload["label"] in {"pls", "non_pls"}
     assert 0.0 <= payload["score"] <= 1.0
-
-
-def test_classify_batch():
-    client = TestClient(app)
-    texts = [
-        "Plain summary text repeated words " + " ".join(["alpha"] * 10),
-        "Original article narrative sample words " + " ".join(["beta"] * 10),
-    ]
-    response = client.post("/api/v1/classify/batch", json={"texts": texts})
-    assert response.status_code == 200
-    payload = response.json()
-    assert "results" in payload
-    assert len(payload["results"]) == 2

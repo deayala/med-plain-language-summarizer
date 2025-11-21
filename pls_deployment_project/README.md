@@ -75,7 +75,6 @@ Each Python module contains a lightweight validation section (`if __name__ == "_
 ## API surface
 - `POST /api/v1/summarize`: calls the managed HF endpoint (including OpenAI-compatible chat endpoints) and returns the generated PLS plus a Pydantic `ReadabilityBreakdown` with metrics for both the source article and generated PLS (Flesch, FKGL, Coleman-Liau, SMOG, Gunning Fog, Dale-Chall, average words per sentence, compression ratio, number recall, repetition ratio, jargon density).
 - `POST /api/v1/classify`: loads `models/production/tfidf_logreg/model.joblib` to return whether an arbitrary text already looks like a PLS (`pls` vs `non_pls`) together with the probability score and threshold used.
-- `POST /api/v1/classify/batch`: bulk classification (up to 128 snippets) backed by the same TF-IDF + logistic regression pipeline.
 
 ### AlignScore microservice
 - Containerized separately under `services/alignscore/` to keep the main API on Python 3.11 while AlignScore runs on Python 3.10 + Torch 1.13.

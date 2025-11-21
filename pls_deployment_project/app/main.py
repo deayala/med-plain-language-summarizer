@@ -10,8 +10,6 @@ from fastapi.responses import ORJSONResponse
 from app.config import GenerationDefaults, get_settings
 from app.generator import PLSGenerator
 from app.schemas import (
-    BulkClassificationRequest,
-    BulkClassificationResponse,
     ClassificationRequest,
     ClassificationResponse,
     HealthResponse,
@@ -78,12 +76,6 @@ def summarize(request: SummarizeRequest) -> SummarizeResponse:
 def classify_text(request: ClassificationRequest) -> ClassificationResponse:
     result = classifier.predict([request.text])[0]
     return ClassificationResponse(**result)
-
-
-@router.post("/classify/batch", response_model=BulkClassificationResponse)
-def classify_batch(request: BulkClassificationRequest) -> BulkClassificationResponse:
-    results = classifier.predict(request.texts)
-    return BulkClassificationResponse(results=[ClassificationResponse(**res) for res in results])
 
 
 app.include_router(router)
