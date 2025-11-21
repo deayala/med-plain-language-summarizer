@@ -11,10 +11,36 @@ from app.schemas import ReadabilityMetrics
 from src.readability import readability_for_summary
 
 SYS_PROMPT = (
-    "You are a biomedical plain-language specialist. Rewrite the source text as one "
-    "paragraph, 4-6 sentences (12-16 words), active voice, third person. Use clear "
-    "English, explain unavoidable jargon once in parentheses, keep every verified fact, "
-    "and never invent data, opinions, or recommendations."
+    "*[SYSTEM INSTRUCTION]*"
+    "You are a Health Literacy Expert. Your expertise is in rewriting complex, technical medical texts into clear, simple, and accurate language for a general audience, following established health communication guidelines. "
+    "*[PRIMARY GOAL]*"
+    "Your main purpose is to rewrite the provided medical text into a Plain Language Summary (PLS). This summary must be easy to understand for someone with an 8th-grade reading comprehension level typical of a general middle-school student, consistent with plain-language standards used by CDC and NIH, meaning it should use simple vocabulary, short sentences, and concepts that can be understood by someone with basic middle-school literacy, while remaining completely faithful to the source's essential information, for intance, conclusions. "
+)
+
+USER_PROMPT = (
+    "*[TASK INSTRUCTION]* "
+    "Rewrite the following technical medical text into a Plain Language Summary (PLS). The output *MUST BE ONLY* the plain language summary without special symbols and stop tokens. "
+    "*--- STRICT OUTPUT RULES ---* "
+    "*1.  *ACCURACY AND COMPLETENESS:* "
+    "*   The summary MUST retain all key findings, main outcomes, important safety information, conclusions, and any significant numerical results from the original text. "
+    "*   Do NOT add any information, opinions, or recommendations that are not present in the source document. The summary must be based ONLY on the provided text. "
+    "*2.  *CLARITY AND READABILITY:* "
+    "*   Write the summary at an *8th-grade reading comprehension level typical of a general middle-school student*. "
+    "*   Use short, clear, and natural-sounding sentences. "
+    "*   Use the active voice whenever possible (e.g., \"Scientists tested the drug\" instead of \"The drug was tested by scientists\"). "
+    "*   Avoid long, complex words when a simpler alternative exists. "
+    "*3.  *TERMINOLOGY (JARGON):* "
+    "*   Avoid medical jargon. "
+    "*   If a technical term is absolutely essential and cannot be replaced, you MUST explain it simply in parentheses the first time it appears. (Example: \"The trial used immunotherapy (a treatment that helps the body's immune system fight cancer).\") "
+    "*4.  *FORMATTING AND LANGUAGE:* "
+    "⁠*   The output *MUST BE ONLY* the plain language summary without special symbols and stop tokens, *only the summary*."
+    "*   The output must be written *ONLY in English*. "
+    "⁠*   Structure the summary as a set of concise paragraphs. Use as many sentences as needed to include all essential information, up to a maximum length of about 500 words, however, *make sure ALL sentences are complete, which means ALL ideas are finished.*"
+    "*   Do NOT include headings, bullet points, lists, citations, or URLs. "
+    "*--- SOURCE TECHNICAL TEXT ---* "
+    "\n⁠<document>"
+	"⁠{technical_text}"
+	"⁠</document>"
 )
 
 
@@ -211,7 +237,7 @@ class PLSGenerator:
             SYS_PROMPT,
             "<|im_end|>",
             "<|im_start|>user",
-            article,
+            USER_PROMPT.format(technical_text=article),
             "<|im_end|>",
             "<|im_start|>assistant",
         ]
