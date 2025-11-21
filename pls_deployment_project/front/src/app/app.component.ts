@@ -99,6 +99,7 @@ export class AppComponent {
     try {
       const result = await this.api.summarize(payload);
       this.applySummary(result);
+      this.isSummarizing = false; // hide PLS spinner once summary is ready
       await this.applyAlignScore(payload, result.summary);
     } catch (error) {
       console.error('Summarization failed', error);
