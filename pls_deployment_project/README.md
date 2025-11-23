@@ -1,108 +1,124 @@
-# PLS Deployment Project
+# PLS Deployment Project Folder - README
 
-End-to-end scaffold to serve the Plain Language Summarizer (PLS) via a managed Hugging Face Inference Endpoint. The layout mirrors `physionet-sepsis-forecasting-main` so the same automation (Makefile targets, Docker flows, Terraform plan) can be reused with minimal friction.
+Plantilla completa para desplegar el Plain Language Summarizer (PLS) con FastAPI, un microservicio AlignScore y un front Angular+nginx empaquetados en Docker y orquestados con Compose sobre EC2. Incluye automatizaciones para construir y publicar imagenes en ECR y para provisionar la instancia via Terraform.
 
-## Repository layout
+## Arquitectura
+
+![Arquitectura](assets/pls_architecture.drawio.png)
+
+- El usuario consume el front Angular servido por nginx, que reenvia `/api/*` a FastAPI.
+- FastAPI expone `/summarize` y `/classify`; delega la generacion al endpoint gestionado de Hugging Face o usa `DRY_RUN`.
+- El clasificador TF-IDF+LogReg se carga desde `models/production`.
+- El microservicio AlignScore (Python 3.10 + Torch 1.13) calcula la similitud via `/align` usando un checkpoint descargado desde S3.
+- Las tres imagenes (api, front, alignscore) se publican en ECR y se despliegan en un EC2 t3.large con Docker Compose (ver `infra/`).
+
+## Componentes clave
+
+- `app/main.py`: define el router FastAPI (`/health`, `/summarize`, `/classify`), aplica CORS/GZip y usa `PLSGenerator` + `BinaryPLSClassifier`.
+- `app/config.py`: `Settings` valida variables (HF_ENDPOINT_URL, HF_TOKEN, DRY_RUN, rutas de modelo) y resume configuracion.
+- `app/generator.py`: `PLSGenerator` elige cliente HF (`HFInferenceClient` o `OpenAIChatClient`) o `DummyGenerator` en `DRY_RUN`; calcula metricas de legibilidad y puntua candidatos.
+- `app/schemas.py`: Pydantic DTOs para requests/responses y validaciones (minimo de palabras, rangos de hiperparametros).
+- `src/classifier.py`: `BinaryPLSClassifier` carga el pipeline joblib y aplica un umbral configurable (`meta.json`).
+- `src/readability.py`: calculo de metricas de legibilidad y densidad de jerga; tolera ausencia de `textstat`.
+- `services/alignscore/app`: FastAPI aislado con `AlignScoreEngine` (carga lazy, deteccion de device, checkpoint opcional); expones `/align`.
+- `front/`: proyecto Angular servido por nginx (`front/Dockerfile` hace build y copia a `/usr/share/nginx/html`; `nginx.conf` proxya `/api/` al servicio `api` en la red de Compose).
+- `infra/`: Terraform que genera `docker-compose.yml` con las tres imagenes, instala Docker/Compose via cloud-init y descarga el checkpoint de AlignScore desde S3.
+- `Makefile`: objetivos para instalar deps, correr pruebas, construir imagenes y empujar a ECR, y aplicar/destroy Terraform.
+
+## Estructura del repositorio
 
 ```
 pls_deployment_project/
-├── Makefile                 # local tooling, Docker, ECR, Terraform helpers
-├── app/                     # FastAPI service exposing /health and /summarize
-├── services/alignscore/     # isolated AlignScore microservice (Python 3.10 + Torch 1.13)
-├── artifacts/               # evaluation artifacts, curves, reports
-├── aws/                     # IaC helpers / policy docs (placeholders)
-├── data/                    # optional cached inputs (mirrors ref project)
-├── docker-compose*.yml      # local + production compose stacks (GPU aware)
-├── front/                   # reserved for UI (placeholder like reference)
-├── infra/                   # Terraform stack targeting a cost-efficient t3.large EC2 instance
-├── models/                  # production classifiers (TF-IDF logreg)
-├── notebooks/               # notebooks + rendered reports
-├── results/                 # eval summaries, readability metrics
-├── scripts/                 # bash helpers (smoke tests, etc.)
-├── src/                     # utility modules shared by the API
-└── requirements*.txt        # runtime + tooling deps
+├── app/                     # FastAPI (/health, /summarize, /classify)
+├── services/alignscore/     # Microservicio AlignScore (FastAPI)
+├── front/                   # Angular + nginx
+├── infra/                   # Terraform (EC2 + user data + Compose)
+├── scripts/                 # utilidades (p. ej., smoke_test.sh)
+├── docker-compose.yml       # stack local (build)
+├── docker-compose-prod.yml  # stack productivo (imagenes ya publicadas)
+├── models/                  # artefactos del clasificador
+├── assets/                  # diagramas e imagenes
+└── Makefile                 # helpers de build, ECR y Terraform
 ```
 
-Each Python module contains a lightweight validation section (`if __name__ == "__main__": ...`) so you can smoke-test the component after editing it. These self-checks never rewrite artifacts; they only read inputs and assert the environment looks sane to prevent accidental file clobbering.
+## Preparacion local
 
-## Quick start
-
-1. **Set up env vars**
-   ```bash
+1) Variables de entorno  
+   ```
    cp .env.example .env
-   # edit the following
    export AWS_REGION=us-east-1
    export HF_TOKEN=hf_xxx
-    export HF_ENDPOINT_URL=https://xxx.aws.endpoints.huggingface.cloud
-   # Optional: required only for OpenAI-compatible chat endpoints
-   export HF_CHAT_MODEL_NAME=deayala/med-gemma-finetuned
+   export HF_ENDPOINT_URL=https://xxx.aws.endpoints.huggingface.cloud
+   export HF_CHAT_MODEL_NAME=deayala/med-gemma-finetuned  # solo para endpoints /chat/completions
    ```
-2. **Create virtualenv and install deps**
-   ```bash
+   Usa `DRY_RUN=1` si no tienes endpoint HF pero quieres probar la API.
+
+2) Instalacion y chequeos rapidos  
+   ```
    make install
-   make checks  # runs pytest + mypy on lightweight stubs
-   ```
-3. **Serve locally** (FastAPI + HF endpoint)
-   ```bash
-   make serve  # uses uvicorn
-   curl -X POST localhost:8080/api/v1/summarize -d '{"article": "..."}'
-   ```
-4. **Build + run container**
-   ```bash
-   make docker-build-api
-   make docker-build-alignscore  # optional: local AlignScore service
-   docker run -p 8080:80 \
-     -e HF_ENDPOINT_URL=https://xxx.aws.endpoints.huggingface.cloud \
-     -e HF_TOKEN=hf_xxx \
-     pls-pls-api:latest
-   ```
-5. **Push to ECR & deploy on a CPU host**
-   ```bash
-   make ecr-push-api
-   make ecr-push-alignscore
-   # ALIGNSCORE_S3_URI defaults to s3://pls-deployment-artifacts/assets/alignscore/AlignScore-base.ckpt
-   make ec2-deploy INSTANCE_TYPE=t3.large
+   make checks       # ruff + mypy via tox
+   make test         # pytest (ligero)
    ```
 
-> **Tip:** If `HF_ENDPOINT_URL` points to an OpenAI-compatible chat endpoint such as `vllm/vllm-openai` (`.../v1/chat/completions`), the API automatically switches to that payload and uses `HF_CHAT_MODEL_NAME` as the `model` parameter. No additional settings are required.
+3) Ejecucion local  
+   - API en caliente: `make serve` y prueba con `curl -X POST localhost:8080/api/v1/summarize -d '{"article": "..."}'`.
+   - Stack Docker: `docker compose up -d` (construye api/front/alignscore). Ajusta `HF_ENDPOINT_URL`, `HF_TOKEN` y `ALIGN_CHECKPOINT_PATH` en tu entorno.
+   - Microservicio AlignScore: monta el checkpoint (`ALIGN_CHECKPOINT_PATH`) o deja `DRY_RUN` en la API si no necesitas scoring.
 
-## Validations
-- `app/config.py`: validates env vars + file paths on import.
-- `app/generator.py`: runs device + dtype checks, exposes `/validate` endpoint for smoke testing.
-- `scripts/smoke_test.sh`: hits `/health` and `/summarize` sequentially.
-- Terraform user-data runs `docker compose ps` to ensure the stack is healthy before finishing cloud-init.
+## Construccion de imagenes y publicacion en ECR
 
-## API surface
-- `POST /api/v1/summarize`: calls the managed HF endpoint (including OpenAI-compatible chat endpoints) and returns the generated PLS plus a Pydantic `ReadabilityBreakdown` with metrics for both the source article and generated PLS (Flesch, FKGL, Coleman-Liau, SMOG, Gunning Fog, Dale-Chall, average words per sentence, compression ratio, number recall, repetition ratio, jargon density).
-- `POST /api/v1/classify`: loads `models/production/tfidf_logreg/model.joblib` to return whether an arbitrary text already looks like a PLS (`pls` vs `non_pls`) together with the probability score and threshold used.
-
-### AlignScore microservice
-- Containerized separately under `services/alignscore/` to keep the main API on Python 3.11 while AlignScore runs on Python 3.10 + Torch 1.13.
-- Build locally with `make docker-build-alignscore` (or `docker compose build alignscore`) and expose it via `docker compose up alignscore`. Mount the checkpoint file as a volume, e.g.:
-  ```bash
-  mkdir -p assets/alignscore && aws s3 cp s3://pls-deployment-artifacts/assets/alignscore/AlignScore-base.ckpt assets/alignscore/
-  docker compose up -d alignscore \
-    -e ALIGN_CHECKPOINT_PATH=/assets/AlignScore-base.ckpt \
-    -v "$(pwd)/assets/alignscore/AlignScore-base.ckpt:/assets/AlignScore-base.ckpt:ro"
+- Variables principales en `Makefile`:
+  - `API_IMAGE/ALIGN_IMAGE/FRONT_IMAGE` y `*_TAG` para nombres locales.
+  - `AWS_ACCOUNT_ID`, `AWS_REGION` y `ECR_URI` para apuntar a tu cuenta.
+  - `*_ECR_REPO` controla el nombre de cada repo en ECR (por defecto coincide con el nombre local).
+- Login en ECR: `make ecr-login`.
+- Construccion local:
   ```
-- Default endpoint: `POST /align` with JSON payload `{"technical_text": "...", "generation": "..."}` returns `{"align_score": 0.88, "model_name": "roberta-base", "device": "cpu", "batch_size": 4}`. The EC2 deployment exposes the service on `https://<host>:8443/align`.
-- Configure the scorer through environment variables prefixed with `ALIGN_`:
-  - `ALIGN_MODEL_NAME` (default `roberta-base`)
-  - `ALIGN_BATCH_SIZE` (default `4`)
-  - `ALIGN_DEVICE_PREFERENCE` (`cpu`, `cuda`, or `auto`)
-  - `ALIGN_CHECKPOINT_PATH` (optional path inside the container to the AlignScore `.ckpt`; mount the checkpoint file or directory and point this variable to it).
-- For infrastructure deployments, user data automatically downloads `s3://pls-deployment-artifacts/assets/alignscore/AlignScore-base.ckpt` into `/opt/alignscore/AlignScore-base.ckpt` (override via `ALIGNSCORE_S3_URI` or Terraform variables) and mounts it into the AlignScore container.
+  make docker-build-api
+  make docker-build-alignscore
+  make docker-build-front   # Angular -> nginx (usa front/Dockerfile)
+  ```
+- Publicar en ECR (incluye el front-end, faltante anteriormente):
+  ```
+  make ecr-push-api
+  make ecr-push-alignscore
+  make ecr-push-front
+  # o todo de una: make ecr-push-all
+  ```
+- Las variables `API_IMAGE_URI`, `ALIGN_IMAGE_URI` y `FRONT_IMAGE_URI` se derivan de cuenta/region/tag y se pasan a Terraform y a `docker-compose-prod.yml`.
 
-## Model inputs & outputs
-- **Request** (`SummarizeRequest`): `article`, optional `best_of`, `temperature`, `max_new_tokens`.
-- **Response**: `summary`, `latency_ms`, `generator` (gpu/cpu/hf-endpoint/dry-run), and `readability={source, generated}` where each entry mirrors the metrics collected in `notebooks/PLS_SFT_Colab_L4_Stable (3).ipynb`.
+## Despliegue en AWS (Terraform + Makefile)
 
-## Notes
-- Hugging Face inference is the default, so the API can run on CPU-only EC2 instances; `DRY_RUN=1` keeps the readiness probes green when the endpoint or token is unavailable.
-- The Terraform module provisions:
-  - VPC + security group exposing 443
-  - IAM instance profile granting access to CloudWatch + Secrets Manager (for the HF token)
-  - A t3.large instance with a 100-GB gp3 volume, Docker, AWS CLI, and docker compose via user data
-  - Systemd-managed Docker Compose stack pulling the image from ECR
+Requisitos: AWS CLI configurado, rol/instance profile con acceso a ECR + S3 (para el checkpoint AlignScore) y par de llaves EC2 (`KEY_NAME`).
 
-- Refer to `docs/DEPLOYMENT.md` (to be added as artifacts evolve) for a step-by-step AWS console walkthrough.
+1) Prepara las imagenes en ECR (ver seccion anterior) y define `HF_ENDPOINT_URL` y `HF_TOKEN` en tu shell.  
+2) Lanza la instancia via Makefile (usa t3.large por defecto; puedes cambiar `INSTANCE_TYPE`):
+   ```
+   make ec2-deploy \
+     HF_ENDPOINT_URL=https://xxx.aws.endpoints.huggingface.cloud \
+     HF_TOKEN=hf_xxx \
+     INSTANCE_TYPE=t3.large \
+     ALIGNSCORE_S3_URI=s3://.../AlignScore-base.ckpt \
+     HOST_PORT_FRONT=80 HOST_PORT_API=8080 HOST_PORT_ALIGNSCORE=8081
+   ```
+   - Terraform renderiza `infra/docker-compose.yml.tftpl` con las URIs de las tres imagenes.
+   - El user-data instala Docker/Compose, hace login en ECR, descarga el checkpoint a `alignscore_ckpt_host_path` (por defecto `/opt/alignscore/AlignScore-base.ckpt`) y levanta el stack en `/opt/${compose_project}`.
+   - Seguridad: el SG abre los puertos `HOST_PORT_FRONT`, `HOST_PORT_API` y `HOST_PORT_ALIGNSCORE`; ajusta si necesitas HTTPS/ALB.
+3) Validación remota: `ssh` a la instancia y ejecuta `docker compose -f /opt/pls/docker-compose.yml ps` y `curl http://localhost:8080/api/v1/health`.
+4) Para destruir: `make destroy-infra` (o `make ec2-destroy` si solo se desea borrar la instancia).
+
+## Endpoints y pruebas rapidas
+
+- API:
+  - `GET /api/v1/health`
+  - `POST /api/v1/summarize` (recibe `article`, acepta overrides de hiperparametros)
+  - `POST /api/v1/classify` (usa `BinaryPLSClassifier`)
+- AlignScore: `POST /align` con `technical_text` y `generation`; responde `align_score`, `model_name`, `device`, `batch_size`.
+- Smoke test: `./scripts/smoke_test.sh` golpea `/health` y `/summarize`.
+
+## Notas y buenas practicas
+
+- `.env` carga secretos (HF_TOKEN, credenciales) via `app/config.py`; no se deben subir secretos al repositorio.
+- El modelo de clasificacion se encuentra en `models/production/tfidf_logreg`; si se desea usar otro bucket, se debe montar y descarga antes de levantar el contenedor.
+- `DRY_RUN=1` mantiene liveness aun sin endpoint HF para pruebas sin inferir en altos costos.
+- Ajusta `HOST_PORT_*` y `compose_project` en `Makefile`/Terraform para evitar conflictos de puertos en EC2.
