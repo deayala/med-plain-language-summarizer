@@ -35,11 +35,9 @@ export class ApiService {
   }
 
   async summarize(article: string): Promise<SummaryResponse> {
-    const response = await firstValueFrom(
+    return firstValueFrom(
       this.http.post<SummaryResponse>(this.endpoint('/summarize'), { article: article.trim() })
     );
-    this.persistHistory(article, response.summary);
-    return response;
   }
 
   alignScore(technicalText: string, generation: string): Promise<AlignScoreResponse> {
@@ -85,19 +83,5 @@ export class ApiService {
   private originWithoutPort(): string {
     const { protocol, hostname } = window.location;
     return `${protocol}//${hostname}`;
-  }
-
-  private persistHistory(source: string, summary: string) {
-    try {
-      const list = JSON.parse(localStorage.getItem('pls_history') || '[]');
-      list.unshift({
-        id: String(Date.now()),
-        label: (summary || source).slice(0, 48),
-        text: source
-      });
-      localStorage.setItem('pls_history', JSON.stringify(list.slice(0, 20)));
-    } catch {
-      // ignore history failures
-    }
   }
 }

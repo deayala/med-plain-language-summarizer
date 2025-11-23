@@ -1,4 +1,4 @@
-import { Component, ViewEncapsulation } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { SidebarComponent } from './components/sidebar/sidebar.component';
@@ -6,6 +6,8 @@ import { UploadComponent } from './components/upload/upload.component';
 import { SummaryComponent } from './components/summary/summary.component';
 import { ApiService } from './services/api.service';
 import { SummaryResponse } from './models/summary';
+import { HistoryEntry, HistoryEntryInput } from './models/history';
+import { HistoryService } from './services/history.service';
 
 @Component({
   selector: 'app-root',
@@ -20,7 +22,7 @@ import { SummaryResponse } from './models/summary';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent {
+export class AppComponent implements OnInit, OnDestroy {
 
   // ====== Texto original / resumen ======
   original = '';
@@ -56,7 +58,27 @@ export class AppComponent {
   readabilityValue = 0;
   readabilityLabel = 'Sin datos – Agrega un texto para evaluarlo';
 
-  constructor(private api: ApiService) {}
+  // ====== Historial ======
+  private lastHistoryId: string | null = null;
+  private historyListener?: (event: Event) => void;
+
+  constructor(private api: ApiService, private history: HistoryService) {}
+
+  ngOnInit(): void {
+    this.historyListener = (event: Event) => {
+      const detail = (event as CustomEvent<HistoryEntry>).detail;
+      if (detail) {
+        this.loadFromHistory(detail);
+      }
+    };
+    window.addEventListener('historySelected', this.historyListener as EventListener);
+  }
+
+  ngOnDestroy(): void {
+    if (this.historyListener) {
+      window.removeEventListener('historySelected', this.historyListener as EventListener);
+    }
+  }
 
   // ================================================
   // 🔥 MÉTODO PRINCIPAL: CLASIFICAR Y GENERAR
@@ -73,6 +95,7 @@ export class AppComponent {
     this.classificationMessage = '';
     this.isSummarizing = false;
     this.isClassifying = true;
+    this.lastHistoryId = null;
 
     try {
       const cls = await this.api.classify(payload);
@@ -99,8 +122,16 @@ export class AppComponent {
     try {
       const result = await this.api.summarize(payload);
       this.applySummary(result);
+      this.persistHistoryEntry({
+        label: (result.summary || payload).slice(0, 48),
+        source: payload,
+        summary: result.summary,
+        readability: result.readability,
+        classificationLabel: this.classificationLabel ?? 'NON_PLS',
+        classificationScore: this.classificationScore
+      });
       this.isSummarizing = false; // hide PLS spinner once summary is ready
-      await this.applyAlignScore(payload, result.summary);
+      await this.applyAlignScore(payload, result.summary, this.lastHistoryId);
     } catch (error) {
       console.error('Summarization failed', error);
       this.classificationMessage =
@@ -161,7 +192,7 @@ export class AppComponent {
     this.isAlignScoring = false;
   }
 
-  private async applyAlignScore(source: string, summary: string): Promise<void> {
+  private async applyAlignScore(source: string, summary: string, historyId?: string): Promise<void> {
     const technical = source.trim();
     const generation = summary.trim();
     if (!technical || !generation) {
@@ -173,6 +204,9 @@ export class AppComponent {
       const response = await this.api.alignScore(technical, generation);
       this.alignScoreGenerated = response.align_score;
       this.alignScoreModel = response.model_name;
+      if (historyId) {
+        this.history.updateAlignScore(historyId, response.align_score, response.model_name);
+      }
     } catch (error) {
       console.error('AlignScore failed', error);
       this.alignScoreGenerated = null;
@@ -218,5 +252,54 @@ export class AppComponent {
       return 'Difícil – Nivel universitario';
     }
     return 'Muy difícil – Nivel académico avanzado';
+  }
+
+  private persistHistoryEntry(input: HistoryEntryInput) {
+    const entry = this.history.add(input);
+    this.lastHistoryId = entry.id;
+  }
+
+  private loadFromHistory(entry: HistoryEntry) {
+    this.resetSummary();
+    this.lastHistoryId = entry.id;
+
+    this.original = entry.source;
+    this.summary = entry.summary;
+
+    this.classificationLabel = entry.classificationLabel;
+    this.classificationScore = entry.classificationScore;
+    this.classificationMessage = '';
+    this.isClassifying = false;
+    this.isSummarizing = false;
+
+    this.applyStoredMetrics(entry);
+
+    this.alignScoreGenerated = entry.alignScore;
+    this.alignScoreModel = entry.alignScoreModel;
+
+    if (entry.alignScore === null) {
+      this.applyAlignScore(entry.source, entry.summary, entry.id);
+    }
+  }
+
+  private applyStoredMetrics(entry: HistoryEntry) {
+    const readability = entry.readability;
+    const source = readability?.source;
+    const generated = readability?.generated;
+
+    this.wordsInitial = this.countWords(entry.source);
+    this.wordsGenerated = this.countWords(entry.summary);
+    this.charsInitial = entry.source.length;
+    this.charsGenerated = entry.summary.length;
+
+    this.factualityInitial = 100;
+    this.factualityGenerated = this.percentFrom(generated?.number_recall ?? 1);
+
+    this.readabilityInitial = source?.flesch_reading_ease ?? 0;
+    this.readabilityGenerated = generated?.flesch_reading_ease ?? 0;
+    this.readabilityValue = this.percentFrom(this.readabilityGenerated / 100);
+    this.readabilityLabel = this.describeReadability(this.readabilityGenerated);
+
+    this.isAlignScoring = false;
   }
 }

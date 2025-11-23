@@ -1,5 +1,7 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HistoryService } from '../../services/history.service';
+import { HistoryEntry } from '../../models/history';
 
 @Component({
   selector: 'app-sidebar',
@@ -9,14 +11,18 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./sidebar.component.scss']
 })
 export class SidebarComponent {
-  open = signal(true);
-  history = signal<any[]>([]);
+  open = true;
 
-  toggle() { this.open.set(!this.open()); }
-  select(item: any) { window.dispatchEvent(new CustomEvent('historySelected', { detail: item })); }
-  remove(item: any) {
-    const next = this.history().filter(h => h.id !== item.id);
-    this.history.set(next);
-    localStorage.setItem('pls_history', JSON.stringify(next));
+  constructor(public history: HistoryService) {}
+
+  toggle() { this.open = !this.open; }
+  select(item: HistoryEntry) {
+    window.dispatchEvent(new CustomEvent('historySelected', { detail: item }));
+  }
+  remove(item: HistoryEntry) {
+    this.history.remove(item.id);
+  }
+  trackById(_index: number, item: HistoryEntry) {
+    return item.id;
   }
 }

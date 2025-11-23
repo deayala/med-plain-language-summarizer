@@ -66,9 +66,28 @@
   cursor: pointer;
   color: #ffffff;
   font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 .history-label:hover {
   text-decoration: underline;
+}
+
+.history-title {
+  font-weight: 600;
+}
+
+.history-meta {
+  font-size: 12px;
+  opacity: 0.8;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.align-status.pending {
+  color: #f59e0b;
 }
 
 /* Botón eliminar */
