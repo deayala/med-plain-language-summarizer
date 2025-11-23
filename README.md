@@ -17,7 +17,7 @@ Sistema completo para generar y clasificar resúmenes en lenguaje sencillo (Plai
 ## Componentes de Machine Learning
 
 - **Clasificador PLS vs no PLS**: TF-IDF (Term Frequency–Inverse Document Frequency, palabras y caracteres) + LogisticRegression balanceada, umbral configurable. Entrenamiento en `notebooks/pls_classifier_baseline.ipynb` y `notebooks/pls_classifier_v2.ipynb`, artefactos listos para S3/volumen.
-- **Generador PLS (MedGemma afinado)**: `google/medgemma-4b-it` con LoRA (Low-Rank Adaptation) 4bit, mejor calidad cualitativa y cuantitativa. Publicado en Hugging Face como `deayala/med-gemma-finetuned` y servido vía endpoint HF Inference.
+- **Generador PLS (MedGemma afinado)**: `google/medgemma-4b-it` con LoRA (Low-Rank Adaptation) 4bit, mejor calidad cualitativa y cuantitativa. Publicado en Hugging Face como `deayala/med-gemma-finetuned` y servido vía endpoint Hugging Face Inference.
 - **Experimentos adicionales**: pipeline <3B, Llama 3.2 1B y comparativa de LLMs (Large Language Models) comerciales (ChatGPT, Claude, Gemini y Llama) para referencias externas.
 
 ---
@@ -27,7 +27,7 @@ Sistema completo para generar y clasificar resúmenes en lenguaje sencillo (Plai
 ![Arquitectura PLS](pls_deployment_project/assets/pls_architecture.drawio.png)
 
 - **Front-end (Angular + nginx)**: sirve la interfaz de usuario (UI) y proxy a `/api/` al servicio FastAPI.
-- **API FastAPI (contenedor `api`)**: expone `/summarize` y `/classify`, delega generación al endpoint HF (Hugging Face) con MedGemma/Qwen o entra en `DRY_RUN`, carga el clasificador TF-IDF+LogReg desde S3.
+- **API FastAPI (contenedor `api`)**: expone `/summarize` y `/classify`, delega generación al endpoint HF (Hugging Face) con MedGemma/Qwen o entra en `DRY_RUN`, carga el clasificador TF-IDF+LogReg desde la ruta local configurada (montable desde S3 o volumen).
 - **AlignScore service**: microservicio dedicado al cálculo de similitud factual (`/services/alignscore`), descarga su checkpoint desde S3.
 - **Infraestructura**: imágenes `api/front/alignscore` se publican en ECR (Elastic Container Registry), Terraform + Makefile provisionan EC2 (Elastic Compute Cloud, t3.large) y despliegan el stack con Docker Compose.
 
@@ -65,7 +65,7 @@ UI Angular (User Interface) sencilla e intuitiva: todo se concentra en una únic
 
 ## Licenciamiento y uso de MedGemma
 
-MedGemma es un modelo abierto basado en Gemma 3 (variantes 4B/27B, texto y multimodal) publicado para acelerar aplicaciones médicas. Puedes usar en este proyecto siempre que cumplas los términos de Health AI Developer Foundations:
+MedGemma es un modelo abierto basado en Gemma 3 (variantes 4B/27B, texto y multimodal) publicado para acelerar aplicaciones médicas. Puedes usarlo en este proyecto siempre que cumplas los términos de Health AI Developer Foundations:
 
 - **Uso previsto**: punto de partida para apps de salud/biociencias con texto e imágenes médicas (por ejemplo, reportes de imagen, QA sobre radiografías o resúmenes clínicos).
 - **No es clínico listo**: las salidas que entrega este modelo son preliminares, no deben guiar diagnóstico, decisiones terapéuticas ni práctica clínica sin validación independiente.

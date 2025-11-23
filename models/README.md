@@ -10,7 +10,7 @@ Repositorio de artefactos finales (clasificador y generadores PLS) y evidencias 
 Bucket S3 con el pipeline `model.joblib`, `meta.json` (umbral/versionado) y `metrics.json`, es la fuente que consume la API para `/classify`.
 
 ![Repositorio Hugging Face MedGemma finetuneado](assets/pls_gemma-finetunning.png)  
-Vista del repo `deayala/med-gemma-finetuned` con pesos, configs y adaptadores LoRA listos para despliegue via endpoint HF.
+Vista del repo `deayala/med-gemma-finetuned` con pesos, configs y adaptadores LoRA (Low-Rank Adaptation) listos para despliegue vía endpoint HF.
 
 ![Repositorio Hugging Face Qwen finetuneado](assets/pls_qwen_finetunning.png)  
 Repo `deayala/qwen-pls-fp16-finetuned` con safetensors y configuraciones fp16, alternativa más liviana al generador principal.
@@ -36,7 +36,7 @@ Perfil `deayala` mostrando la publicación de los modelos (MedGemma y Qwen afina
 
 ### MedGemma afinado
 - Base: `google/medgemma-4b-it`.
-- Afinación: LoRA en 4 bits (`r=16`, `lora_alpha=32`, `dropout=0.05`, módulos q/k/v/o), sin packing, prompt con rol de *Health Literacy Expert* para producir PLS de nivel ~8.º grado.
+- Afinación: LoRA (Low-Rank Adaptation) en 4 bits (`r=16`, `lora_alpha=32`, `dropout=0.05`, módulos q/k/v/o), sin packing, prompt con rol de *Health Literacy Expert* para producir PLS de nivel ~8.º grado.
 - Documentado en `notebooks/pls_sft_medgemma.ipynb`; evidencias en `assets/pls_gemma-finetunning.png`.
 - Despliegue: publicado como `deayala/med-gemma-finetuned` y servido vía endpoint HF Inference (vLLM) mostrado en `assets/endpoint_gemma-finetunning.png`.
 - Resultado: mejor desempeño cualitativo y cuantitativo entre los generadores experimentados.

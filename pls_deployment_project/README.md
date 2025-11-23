@@ -75,16 +75,6 @@ Los siguientes comandos debe ejecutarse en el mismo directorio donde se encuentr
 
 ---
 
-## Infraestructura (Terraform) — Resumen en español
-
-- Lanza una instancia Spot t3.large (configurable) con Docker. La IAM instance profile debe permitir `AmazonS3ReadOnlyAccess` para descargar el checkpoint de AlignScore desde `alignscore_s3_uri` (por defecto un bucket público).
-- El checkpoint se guarda en `/opt/alignscore/AlignScore-base.ckpt` y se monta de solo lectura en el contenedor AlignScore (`/assets/AlignScore-base.ckpt`). Mantén ese path dedicado a AlignScore, el stack de la API vive en `/opt/pls`.
-- `infra/docker-compose.yml.tftpl` define los servicios api/alignscore/front con puertos host configurables (`host_port_api` 8080, `host_port_alignscore` 8081, `host_port_front` 80). nginx proxya `/api/*` hacia FastAPI.
-- Tras `terraform apply`, verifica en la instancia con `docker compose -f /opt/${compose_project}/docker-compose.yml ps`. Si falta AlignScore, confirma el checkpoint en `/opt/alignscore/AlignScore-base.ckpt` y reanuda con `docker compose up -d alignscore`.
-- El front incluye un certificado autofirmado (`/etc/nginx/certs/tls.crt`), monta tu propio par cert/key en ese path para evitar advertencias del navegador.
-
----
-
 ## Preparación local
 
 1) Variables de entorno  
@@ -134,7 +124,7 @@ Los siguientes comandos debe ejecutarse en el mismo directorio donde se encuentr
 
 ---
 
-## Despliegue en AWS (Terraform + Makefile)
+## Despliegue en AWS con Terraform y Makefile
 
 Requisitos: AWS CLI configurado, rol/instance profile con acceso a ECR + S3 (para el checkpoint AlignScore) y par de llaves EC2 (`KEY_NAME`).
 
@@ -153,6 +143,16 @@ Requisitos: AWS CLI configurado, rol/instance profile con acceso a ECR + S3 (par
    - Seguridad: el SG abre los puertos `HOST_PORT_FRONT`, `HOST_PORT_API` y `HOST_PORT_ALIGNSCORE`.
 3) Validación remota: `ssh` a la instancia y ejecuta `docker compose -f /opt/pls/docker-compose.yml ps` y `curl http://localhost:8080/api/v1/health`.
 4) Para destruir la infraestructura desplegada: `make destroy-infra` (o `make ec2-destroy` si solo se desea borrar la instancia).
+
+---
+
+## Infraestructura con Terraform
+
+- Lanza una instancia Spot t3.large (configurable) con Docker. La IAM instance profile debe permitir `AmazonS3ReadOnlyAccess` para descargar el checkpoint de AlignScore desde `alignscore_s3_uri` (por defecto un bucket público).
+- El checkpoint se guarda en `/opt/alignscore/AlignScore-base.ckpt` y se monta de solo lectura en el contenedor AlignScore (`/assets/AlignScore-base.ckpt`). Mantén ese path dedicado a AlignScore, el stack de la API vive en `/opt/pls`.
+- `infra/docker-compose.yml.tftpl` define los servicios api/alignscore/front con puertos host configurables (`host_port_api` 8080, `host_port_alignscore` 8081, `host_port_front` 80). nginx proxya `/api/*` hacia FastAPI.
+- Tras `terraform apply`, verifica en la instancia con `docker compose -f /opt/${compose_project}/docker-compose.yml ps`. Si falta AlignScore, confirma el checkpoint en `/opt/alignscore/AlignScore-base.ckpt` y reanuda con `docker compose up -d alignscore`.
+- El front incluye un certificado autofirmado (`/etc/nginx/certs/tls.crt`), monta tu propio par cert/key en ese path para evitar advertencias del navegador.
 
 ---
 
@@ -175,5 +175,3 @@ Requisitos: AWS CLI configurado, rol/instance profile con acceso a ECR + S3 (par
 - Ajusta `HOST_PORT_*` y `compose_project` en `Makefile`/Terraform para evitar conflictos de puertos en EC2.
 - Para mas información de despliegue y comandos utiles para hacer pruebas locales ejecute `make help`:
 ![make help](assets/make_help.png)
-
----

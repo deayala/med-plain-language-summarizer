@@ -10,7 +10,7 @@ Conjunto de cuadernos que documentan la exploración, prototipado y experimentos
 - **EDA**: cada notebook arranca con inspección de columnas, longitudes de texto y limpieza mínima antes de entrenar o evaluar.
 - **Clasificador**: flujo TF-IDF + LogisticRegression (baseline y v2) para detectar si un texto ya es PLS.
 - **Generadores PLS ligeros**: múltiples rutas de fine-tuning con modelos <=4B parámetros (MedGemma, Qwen, Llama 3.2 1B) y un pipeline <3B.
-- **LLMs comerciales**: evaluación comparativa de ChatGPT y Claude sobre el mismo set de evaluación.
+- **LLMs (Large Language Models) comerciales**: evaluación comparativa de ChatGPT y Claude sobre el mismo set de evaluación.
 
 ---
 
