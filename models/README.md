@@ -6,12 +6,15 @@ Repositorio de artefactos finales (clasificador y generadores PLS) y evidencias 
 
 ## Artefactos y referencias
 
-- `assets/`:
-  - `classifier_s3_tfidf_logreg.png`: snapshot del bucket S3 con `model.joblib`, `meta.json` y `metrics.json` del clasificador PLS vs no PLS.
-  - `pls_gemma-finetunning.png`: repositorio Hugging Face `deayala/med-gemma-finetuned` con pesos, configs y adaptadores LoRA.
-  - `pls_qwen_finetunning.png`: repositorio Hugging Face `deayala/qwen-pls-fp16-finetuned` con safetensors y configs.
-  - `endpoint_gemma-finetunning.png`: endpoint HF Inference (vLLM) configurado para servir el generador MedGemma afinado.
-  - `hugging_face_main.png`: vista del perfil de Hugging Face `deayala` con los modelos privados publicados.
+![Clasificador TF-IDF+LogReg en S3](assets/classifier_s3_tfidf_logreg.png)
+
+![Repositorio Hugging Face MedGemma finetuneado](assets/pls_gemma-finetunning.png)
+
+![Repositorio Hugging Face Qwen finetuneado](assets/pls_qwen_finetunning.png)
+
+![Endpoint HF Inference vLLM para MedGemma](assets/endpoint_gemma-finetunning.png)
+
+![Perfil Hugging Face con modelos PLS](assets/hugging_face_main.png)
 
 ---
 
