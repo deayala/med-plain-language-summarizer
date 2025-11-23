@@ -31,11 +31,11 @@ Los siguientes comandos debe ejecutarse en el mismo directorio donde se encuentr
 
 1) **Construcción local de imágenes**  
    `make docker-build-api`, `make docker-build-alignscore` y `make docker-build-front` genera la imagenes necesarias para el proyecto en la maquina local, debe contar con Docker instalado para su ejecución, a continuación esta un ejemplo de la construccion del front el cual despliega Angular+nginx.  
-   ![Build front](assets/make docker-build-front.png)
+   ![Build front](assets/make_docker-build-front.png)
 
 2) **Publicación en ECR (Elastic Container Registry)**  
    `make ecr-push-api`, `make ecr-push-alignscore` y `make ecr-push-front` sube las imagen a ECR del front, el mismo flujo aplica a api/alignscore.  
-   ![Push front a ECR](assets/make ecr-push-front.png)
+   ![Push front a ECR](assets/make_ecr-push-front.png)
 
 3) **Verificación en ECR**  
    Comprobar las tres imágenes (api/front/alignscore) publicadas en el repositorio de ECR.  
@@ -43,9 +43,9 @@ Los siguientes comandos debe ejecutarse en el mismo directorio donde se encuentr
 
 4) **Provisionamiento con Terraform**  
    `make ec2-deploy` implementa Terraform, crea la instancia EC2 y renderiza `docker-compose.yml` remoto con las imágenes de ECR y variables de entorno.  
-   ![Deploy - paso 1](assets/make ec2-deploy_1.png)  
-   ![Deploy - paso 2](assets/make ec2-deploy_2.png)  
-   ![Deploy - paso 3](assets/make ec2-deploy_3.png)
+   ![Deploy - paso 1](assets/make_ec2-deploy_1.png)  
+   ![Deploy - paso 2](assets/make_ec2-deploy_2.png)  
+   ![Deploy - paso 3](assets/make_ec2-deploy_3.png)
 
 5) **Stack en EC2**  
    Una vez levantado, la instancia (t3.large) ejecuta Docker Compose con los servicios `api`, `alignscore` y `front`.  
@@ -174,6 +174,6 @@ Requisitos: AWS CLI configurado, rol/instance profile con acceso a ECR + S3 (par
 - `DRY_RUN=1` mantiene liveness aun sin endpoint HF para pruebas sin inferir en altos costos.
 - Ajusta `HOST_PORT_*` y `compose_project` en `Makefile`/Terraform para evitar conflictos de puertos en EC2.
 - Para mas información de despliegue y comandos utiles para hacer pruebas locales ejecute `make help`:
-![make help](assets/make help.png)
+![make help](assets/make_help.png)
 
 ---
