@@ -6,15 +6,20 @@ Repositorio de artefactos finales (clasificador y generadores PLS) y evidencias 
 
 ## Artefactos y referencias
 
-![Clasificador TF-IDF+LogReg en S3](assets/classifier_s3_tfidf_logreg.png)
+![Clasificador TF-IDF+LogReg en S3](assets/classifier_s3_tfidf_logreg.png)  
+Bucket S3 con el pipeline `model.joblib`, `meta.json` (umbral/versionado) y `metrics.json`, es la fuente que consume la API para `/classify`.
 
-![Repositorio Hugging Face MedGemma finetuneado](assets/pls_gemma-finetunning.png)
+![Repositorio Hugging Face MedGemma finetuneado](assets/pls_gemma-finetunning.png)  
+Vista del repo `deayala/med-gemma-finetuned` con pesos, configs y adaptadores LoRA listos para despliegue via endpoint HF.
 
-![Repositorio Hugging Face Qwen finetuneado](assets/pls_qwen_finetunning.png)
+![Repositorio Hugging Face Qwen finetuneado](assets/pls_qwen_finetunning.png)  
+Repo `deayala/qwen-pls-fp16-finetuned` con safetensors y configuraciones fp16, alternativa más liviana al generador principal.
 
-![Endpoint HF Inference vLLM para MedGemma](assets/endpoint_gemma-finetunning.png)
+![Endpoint HF Inference vLLM para MedGemma](assets/endpoint_gemma-finetunning.png)  
+Endpoint Hugging Face Inference (motor vLLM) configurado para servir el modelo MedGemma afinado y ser llamado por la API FastAPI el path para `/summarize`.
 
-![Perfil Hugging Face con modelos PLS](assets/hugging_face_main.png)
+![Perfil Hugging Face con modelos PLS](assets/hugging_face_main.png)  
+Perfil `deayala` mostrando la publicación de los modelos (MedGemma y Qwen afinados) usados en la arquitectura.
 
 ---
 

@@ -1,8 +1,0 @@
-Terraform stack that launches a single g5.xlarge Spot instance with Docker + NVIDIA runtime. Make sure the provided IAM instance profile has `AmazonS3ReadOnlyAccess` so user data can pull the AlignScore checkpoint from `s3://pls-deployment-artifacts/assets/alignscore/AlignScore-base.ckpt` (or whichever URI you supply via `alignscore_s3_uri`).
-
-Key deployment notes:
-- `alignscore_s3_uri` now defaults to the public artifacts bucket, so unless you override it the bootstrapper downloads `AlignScore-base.ckpt` automatically.
-- The checkpoint is staged under `/opt/alignscore/AlignScore-base.ckpt` and mounted read-only into the AlignScore container (`/assets/AlignScore-base.ckpt`). Keep that directory dedicated to AlignScore artifacts so the API stack remains isolated under `/opt/pls`.
-- `infra/docker-compose.yml.tftpl` feeds the API, AlignScore, and front-end services into `/opt/${compose_project}/docker-compose.yml`. The API publishes `${host_port_api}` (8080 by default), AlignScore exposes `${host_port_alignscore}` (8081), and the Angular + nginx front serves HTTP on `${host_port_front}` (80) while proxying `/api/*` calls back to FastAPI.
-- After `terraform apply`, SSH into the instance and run `docker compose -f /opt/${compose_project}/docker-compose.yml ps` to verify that `api`, `alignscore`, and `front` are healthy. If AlignScore is missing, confirm the checkpoint exists at `/opt/alignscore/AlignScore-base.ckpt` and rerun `docker compose up -d alignscore`.
-- The nginx front-end ships with a self-signed certificate (stored in `/etc/nginx/certs/tls.crt` inside the container). Mount your own certificate/key pair at that path to avoid browser warnings.
