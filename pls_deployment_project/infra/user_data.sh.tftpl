@@ -1,0 +1,73 @@
+#!/bin/bash
+set -euxo pipefail
+export DEBIAN_FRONTEND=noninteractive
+
+retry() {
+  local attempts="$1"
+  shift
+  local count=0
+  until "$@"; do
+    count=$((count + 1))
+    if [[ $count -ge $attempts ]]; then
+      return 1
+    fi
+    sleep 5
+  done
+}
+
+install_docker_stack() {
+  if command -v apt-get >/dev/null 2>&1; then
+    retry 5 apt-get update
+    retry 5 apt-get install -y docker.io awscli curl jq
+    install_compose_binary
+  elif command -v dnf >/dev/null 2>&1; then
+    retry 5 dnf -y update || true
+    retry 5 dnf -y install docker awscli curl jq
+    install_compose_binary
+  elif command -v yum >/dev/null 2>&1; then
+    retry 5 yum -y update || true
+    retry 5 yum -y install docker awscli curl jq
+    install_compose_binary
+  else
+    echo "Unsupported package manager" >&2
+    exit 1
+  fi
+  systemctl enable --now docker
+  usermod -aG docker ubuntu || true
+  usermod -aG docker ec2-user || true
+}
+
+install_compose_binary() {
+  local plugin_dir="/usr/local/lib/docker/cli-plugins"
+  mkdir -p "$plugin_dir"
+  local arch
+  arch="$(uname -m)"
+  curl -fsSL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$arch" \
+    -o "$plugin_dir/docker-compose"
+  chmod +x "$plugin_dir/docker-compose"
+}
+
+install_docker_stack
+
+aws ecr get-login-password --region "${aws_region}" | docker login --username AWS --password-stdin "${image_registry}"
+
+ALIGN_DIR="$(dirname "${alignscore_ckpt_host_path}")"
+install -d -o root -g root -m 755 "$ALIGN_DIR"
+if [[ ! -f "${alignscore_ckpt_host_path}" ]]; then
+  retry 5 aws s3 cp "${alignscore_s3_uri}" "${alignscore_ckpt_host_path}" --region "${aws_region}"
+fi
+chmod 644 "${alignscore_ckpt_host_path}"
+
+PROJECT_DIR="/opt/${compose_project}"
+install -d -o root -g root -m 755 "$PROJECT_DIR"
+
+cat <<'COMPOSE' > "$PROJECT_DIR/docker-compose.yml"
+${docker_compose_yaml}
+COMPOSE
+
+cd "$PROJECT_DIR"
+docker compose pull || true
+docker compose up -d
+docker compose ps
+
+echo "Docker compose deployed at $PROJECT_DIR" | tee -a /var/log/cloud-init-output.log
