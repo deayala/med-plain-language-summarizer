@@ -1,6 +1,6 @@
 # Models — README
 
-Repositorio de artefactos finales (clasificador y generadores PLS) y evidencias visuales asociadas a su entrenamiento y despliegue.
+Repositorio de artefactos finales (clasificador y generadores PLS), evidencias visuales asociadas a su entrenamiento y despliegue.
 
 ---
 
