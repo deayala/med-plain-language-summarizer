@@ -1,83 +1,130 @@
-# Proyecto PLS — Visión General
+# Generación Automática de Resúmenes Médicos en Lenguaje Sencillo
 
-Sistema completo para generar y clasificar resúmenes en lenguaje sencillo (Plain Language Summaries, PLS) de textos biomédicos. Incluye datos curados, notebooks de experimentación, artefactos de modelos (clasificador y generadores afinados) y una arquitectura de despliegue con interfaz (API, Application Programming Interface) FastAPI, microservicio AlignScore y front Angular servido con nginx.
+Este repositorio contiene el código, los datos y los artefactos para el trabajo de grado de maestría titulado "Generación automática de resúmenes médicos en lenguaje sencillo". El proyecto desarrolla y evalúa un sistema de PNL para mejorar la alfabetización en salud, incluyendo un clasificador de estilo y la comparación de modelos de lenguaje afinados (<4B) contra modelos fundacionales (>10B).
 
----
-
-## Mapa de carpetas y documentación
-
-- `data/` — splits de entrenamiento/validación/prueba y textos de evaluación. Métricas de longitud y ejemplos en [`data/README.md`](data/README.md).
-- `notebooks/` — EDA, clasificador PLS vs no PLS, fine-tuning de generadores (MedGemma, Qwen, Llama) y comparativa de LLMs comerciales. Resumen en [`notebooks/README.md`](notebooks/README.md).
-- `models/` — artefactos finales y evidencia visual (clasificador TF-IDF+LogReg y generadores afinados). Detalle en [`models/README.md`](models/README.md).
-- `pls_deployment_project/` — stack de despliegue: FastAPI + AlignScore + front Angular/nginx, Docker Compose, Terraform y scripts. Guía en [`pls_deployment_project/README.md`](pls_deployment_project/README.md).
-- `outputs/` — resultados de entrenamiento y snapshots de experimentos.
+**Autores:** M. Álvarez, D. Ayala, M. Hernández, R. Murcia
 
 ---
 
-## Componentes de Machine Learning
+## Índice
 
-- **Clasificador PLS vs no PLS**: TF-IDF (Term Frequency–Inverse Document Frequency, palabras y caracteres) + LogisticRegression balanceada, umbral configurable. Entrenamiento en `notebooks/pls_classifier_baseline.ipynb` y `notebooks/pls_classifier_v2.ipynb`, artefactos listos para S3/volumen.
-- **Generador PLS (MedGemma afinado)**: `google/medgemma-4b-it` con LoRA (Low-Rank Adaptation) 4bit, mejor calidad cualitativa y cuantitativa. Publicado en Hugging Face como `deayala/med-gemma-finetuned` y servido vía endpoint Hugging Face Inference.
-- **Experimentos adicionales**: pipeline <3B, Llama 3.2 1B y comparativa de LLMs (Large Language Models) comerciales (ChatGPT, Claude, Gemini y Llama) para referencias externas.
-
----
-
-## Arquitectura de despliegue
-
-![Arquitectura PLS](pls_deployment_project/assets/pls_architecture.drawio.png)
-
-- **Front-end (Angular + nginx)**: sirve la interfaz de usuario (UI) y proxy a `/api/` al servicio FastAPI.
-- **API FastAPI (contenedor `api`)**: expone `/summarize` y `/classify`, delega generación al endpoint HF (Hugging Face) con MedGemma/Qwen o entra en `DRY_RUN`, carga el clasificador TF-IDF+LogReg desde la ruta local configurada (montable desde S3 o volumen).
-- **AlignScore service**: microservicio dedicado al cálculo de similitud factual (`/services/alignscore`), descarga su checkpoint desde S3.
-- **Infraestructura**: imágenes `api/front/alignscore` se publican en ECR (Elastic Container Registry), Terraform + Makefile provisionan EC2 (Elastic Compute Cloud, t3.large) y despliegan el stack con Docker Compose.
+- [Visión General de la Arquitectura](#visión-general-de-la-arquitectura)
+- [Estructura del Repositorio](#estructura-del-repositorio)
+- [Instalación y Requisitos](#instalación-y-requisitos)
+- [Uso y Reproducción de Resultados](#uso-y-reproducción-de-resultados)
+  - [1. Clasificador PLS/no-PLS](#1-clasificador-plsno-pls)
+  - [2. Generación de Resúmenes y Análisis Comparativo](#2-generación-de-resúmenes-y-análisis-comparativo)
+- [Despliegue de la Aplicación](#despliegue-de-la-aplicación)
+  - [Guía Visual del Frontend](#guía-visual-del-frontend)
+- [Resultados Clave](#resultados-clave)
+- [Licenciamiento y Uso de MedGemma](#licenciamiento-y-uso-de-medgemma)
 
 ---
 
-## Uso del front-end (paso a paso)
+## Visión General de la Arquitectura
 
-UI Angular (User Interface) sencilla e intuitiva: todo se concentra en una única vista con formularios claros, resultados visibles sin recargar y paneles laterales para métricas e historial.
+El sistema final consta de una aplicación web desacoplada que integra los modelos desarrollados, desplegada en la nube de AWS para garantizar escalabilidad y disponibilidad.
 
-1) Pantalla inicial: vista limpia con navegación mínima y acceso directo al flujo principal.  
-   ![Pantalla inicial](assets/front_start.png)
+![Arquitectura del Sistema](deployment/assets/pls_architecture.drawio.png)
 
-2) Ingreso de texto: área amplia para pegar el artículo técnico, controles de hiperparámetros (temperatura, top_p, longitud) y toggles para clasificar o generar. Validaciones básicas evitan peticiones vacías.  
-   ![Ingreso de texto](assets/user_input_text_section.png)
-
-3) Resultado PLS: la salida aparece alineada con el texto de entrada para lectura rápida, botones permiten copiar o iterar manteniendo el contexto.  
-   ![Resultado PLS](assets/pls_result_section.png)
-
-4) Métricas: panel compacto con legibilidad y, cuando aplica, AlignScore, se muestran etiquetas y valores legibles para un usuario no técnico.  
-   ![Métricas](assets/metrics_section.png)
-
-5) Historial: lista cronológica de generaciones previas con fragmentos de entrada/salida para auditoría y reutilización sin perder el estado actual.  
-   ![Historial de PLS](assets/history_pls_generate_section.png)
+- **Front-end (Angular + nginx)**: Sirve la interfaz de usuario (UI) y actúa como proxy, redirigiendo las peticiones de `/api/` al servicio FastAPI.
+- **API FastAPI (contenedor `api`)**: Expone los endpoints `/summarize` y `/classify`. Delega la generación de resúmenes a un endpoint de Inferencia de Hugging Face y carga el clasificador TF-IDF+LogReg desde un volumen local.
+- **AlignScore service**: Microservicio dedicado al cálculo de la similitud factual, asegurando que las dependencias no entren en conflicto con la API principal.
+- **Infraestructura**: Las imágenes de los contenedores (`api`, `front`, `alignscore`) se publican en Amazon ECR. Un script de Terraform aprovisiona una instancia EC2 (t3.large) y despliega la pila de servicios usando Docker Compose.
 
 ---
 
-## Equipo
+## Estructura del Repositorio
 
-- Monica Alejandra Alvarez Carrillo.
-- Daniel Eduardo Ayala Ramírez.
-- Manuela Alejandra Hernandez Otalora.
-- Richard Stiv Murcia Huerfano.
+```
+.
+├── README.md                 # Documentación principal del proyecto.
+├── reports/                  # Paper final, figuras, diagramas y gráficos.
+├── data/                     # Datasets curados y resultados de los experimentos.
+├── notebooks/                # Proceso de investigación y experimentación en Jupyter.
+├── models/                   # Artefactos finales de los modelos entrenados.
+└── deployment/               # Código autocontenido para el despliegue de la aplicación.
+```
+
+- **`reports/`**: Contiene el artículo científico (`MAIA - Paper.pdf`) y todas las figuras (`reports/figures/`) usadas en la documentación y el paper.
+- **`data/`**: Almacena los datos de entrada (`fine_tunning/`) y los CSVs con los resultados detallados de los experimentos (`classifier/`).
+- **`notebooks/`**: Documenta el flujo de investigación. Los notebooks están numerados para indicar el orden lógico. Los experimentos descartados se encuentran en `notebooks/archive/`.
+- **`models/`**: Contiene los artefactos de los modelos listos para ser usados: el clasificador (`pls_classifier/`) y los adaptadores LoRA del generador MedGemma (`pls_generator_medgemma/`).
+- **`deployment/`**: Incluye todo lo necesario para la aplicación funcional: API, frontend, servicio AlignScore, configuración de Docker e infraestructura como código con Terraform.
 
 ---
 
-## Licenciamiento y uso de MedGemma
+## Instalación y Requisitos
 
-MedGemma es un modelo abierto basado en Gemma 3 (variantes 4B/27B, texto y multimodal) publicado para acelerar aplicaciones médicas. Puedes usarlo en este proyecto siempre que cumplas los términos de Health AI Developer Foundations:
+Para reproducir los experimentos de investigación, clona el repositorio y asegúrate de tener un entorno de Python 3.10+ y Jupyter. Las dependencias específicas se encuentran en los propios notebooks.
 
-- **Uso previsto**: punto de partida para apps de salud/biociencias con texto e imágenes médicas (por ejemplo, reportes de imagen, QA sobre radiografías o resúmenes clínicos).
-- **No es clínico listo**: las salidas que entrega este modelo son preliminares, no deben guiar diagnóstico, decisiones terapéuticas ni práctica clínica sin validación independiente.
-- **Validación obligatoria**: evalúa en datos representativos de tu contexto (edad, sexo, patología, dispositivo, etc.) y vigila posible contaminación de datos al probar generalización.
-- **Sensibilidad al prompt**: MedGemma puede variar más su salida según el texto exacto del prompt que su base Gemma 3. Pequeños cambios de redacción (palabras, orden, tono) pueden alterar la calidad o precisión de la respuesta. Por eso conviene iterar sobre el prompt (probar variantes, ejemplos few-shot, instrucciones claras) y validar los resultados con datos de tu caso de uso antes de adoptarlo.
-- **Cumplimiento**: revisa y respeta los términos oficiales antes de desplegar este proyecto: https://developers.google.com/health-ai-developer-foundations/medgemma
+```bash
+git clone https://github.com/deayala/med-plain-language-summarizer.git
+cd med-plain-language-summarizer
+```
+
+Para el despliegue de la aplicación, consulta la guía detallada en [`deployment/README.md`](deployment/README.md).
 
 ---
 
-## Referencias rápidas
+## Uso y Reproducción de Resultados
 
-- Clasificador: `notebooks/pls_classifier_baseline.ipynb`
-- Generador (MedGemma): `notebooks/pls_sft_medgemma.ipynb`
-- Generador (Qwen): `notebooks/pls_sft_qwen.ipynb`
-- Despliegue: `pls_deployment_project/README.md`
+Los notebooks principales guían a través del proceso de investigación y modelado.
+
+### 1. Clasificador PLS/no-PLS
+El entrenamiento y la evaluación del clasificador binario se detallan en:
+- **`notebooks/2_pls_classifier.ipynb`**
+
+Este notebook genera el modelo final que se almacena en `models/pls_classifier/`.
+
+### 2. Generación de Resúmenes y Análisis Comparativo
+El proceso completo, desde el fine-tuning de MedGemma hasta la evaluación cuantitativa y cualitativa contra modelos SOTA (State-Of-The-Art), está consolidado en el notebook principal:
+- **`notebooks/1_pls_generator_finetuning.ipynb`**
+
+El adaptador LoRA resultante se encuentra en `models/pls_generator_medgemma/` y está listo para ser usado.
+
+---
+
+## Despliegue de la Aplicación
+
+Las instrucciones técnicas para construir las imágenes de Docker, provisionar la infraestructura en AWS y lanzar la aplicación se encuentran en la guía de despliegue:
+- **[Guía de Despliegue](deployment/README.md)**
+
+### Guía Visual del Frontend
+
+La interfaz de usuario es intuitiva y se concentra en una única vista para facilitar el flujo de trabajo.
+
+1.  **Pantalla inicial:** Vista limpia con acceso directo a la funcionalidad principal.
+    ![Pantalla inicial](reports/figures/frontend0_front_start.png)
+
+2.  **Ingreso de texto:** Área para pegar el texto técnico, con controles para ajustar los hiperparámetros de generación.
+    ![Ingreso de texto](reports/figures/frontend1_user_input_text_section.png)
+
+3.  **Resultado PLS:** El resumen generado se muestra junto al texto original para una comparación fácil y rápida.
+    ![Resultado PLS](reports/figures/frontend2_pls_result_section.png)
+
+4.  **Métricas:** Un panel lateral muestra métricas de legibilidad y factualidad (AlignScore) de forma clara.
+    ![Métricas](reports/figures/frontend3_metrics_section.png)
+
+5.  **Historial:** Una lista cronológica de las generaciones previas permite auditar y reutilizar resultados.
+    ![Historial de PLS](reports/figures/frontend4_history_pls_generate_section.png)
+
+---
+
+## Resultados Clave
+
+- El clasificador TF-IDF + Regresión Logística alcanzó un **F1-score de 0.997** en el conjunto de prueba, demostrando ser una solución eficiente y precisa para la identificación de estilo.
+- El modelo **MedGemma afinado** superó cualitativamente a otros modelos compactos, logrando un balance superior entre factualidad y legibilidad. Notablemente, **logró generar resúmenes legibles para un nivel de 8º grado en el 47% de los casos, en comparación con el 0% de los resúmenes de referencia escritos por humanos**.
+- La comparativa demuestra que los modelos compactos afinados (SLMs) son una alternativa viable y de bajo costo a los grandes modelos comerciales para tareas especializadas, promoviendo los principios de **IA Sostenible (Green AI)** sin sacrificar la calidad.
+
+---
+
+## Licenciamiento y Uso de MedGemma
+
+MedGemma es un modelo abierto basado en Gemma 3 publicado para acelerar aplicaciones médicas. Su uso en este proyecto se adhiere a los términos de *Health AI Developer Foundations*:
+
+- **Uso previsto**: Punto de partida para aplicaciones de salud y biociencias.
+- **No es clínico listo**: Las salidas son preliminares y no deben guiar decisiones clínicas sin validación humana experta.
+- **Validación obligatoria**: Es crucial evaluar el modelo en datos representativos del contexto de uso específico.
+- **Sensibilidad al prompt**: La calidad de la salida puede variar significativamente con pequeños cambios en las instrucciones. Es necesario un proceso iterativo de diseño de prompts.
+- **Cumplimiento**: Revisa los términos oficiales antes de cualquier uso productivo: [https://developers.google.com/health-ai-developer-foundations/medgemma](https://developers.google.com/health-ai-developer-foundations/medgemma)
