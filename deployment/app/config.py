@@ -9,9 +9,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class GenerationDefaults(BaseModel):
-    min_new_tokens: int = Field(default=60, ge=1, le=512)
-    max_new_tokens: int = Field(default=200, ge=64, le=2048)
-    temperature: float = Field(default=0.2, ge=0.0, le=2.0)
+    min_new_tokens: int = Field(default=512, ge=1, le=1024)
+    max_new_tokens: int = Field(default=1024, ge=64, le=2048)
+    temperature: float = Field(default=0.3, ge=0.0, le=2.0)
     top_p: float = Field(default=0.9, ge=0.1, le=1.0)
     no_repeat_ngram_size: int = Field(default=3, ge=1, le=10)
     repetition_penalty: float = Field(default=1.12, ge=0.0, le=10.0)

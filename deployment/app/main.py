@@ -28,10 +28,25 @@ classifier = BinaryPLSClassifier(
     meta_path=settings.classifier_meta_path,
 )
 
+API_DESCRIPTION = (
+    "Endpoints principales del PLS Generator.\n\n"
+    "- `/api/v1/health`: estado del servicio y configuración activa.\n"
+    "- `/api/v1/summarize`: genera un Plain Language Summary y devuelve métricas de legibilidad.\n"
+    "- `/api/v1/classify`: clasifica un texto como PLS o non-PLS usando el modelo TF-IDF+LogReg.\n"
+    "Para evaluar alineación factual se expone un microservicio separado (`/align`)."
+)
+API_TAGS_METADATA = [
+    {"name": "health", "description": "Estado del servicio y configuración activa."},
+    {"name": "summarize", "description": "Generación de resúmenes en lenguaje sencillo y métricas asociadas."},
+    {"name": "classify", "description": "Clasificación binaria de textos PLS vs non-PLS."},
+]
+
 app = FastAPI(
     title=settings.api_title,
     version=settings.api_version,
     default_response_class=ORJSONResponse,
+    description=API_DESCRIPTION,
+    openapi_tags=API_TAGS_METADATA,
 )
 app.add_middleware(GZipMiddleware, minimum_size=2_048)
 app.add_middleware(
@@ -45,12 +60,12 @@ app.add_middleware(
 router = APIRouter(prefix=settings.api_prefix)
 
 
-@router.get("/health", response_model=HealthResponse)
+@router.get("/health", response_model=HealthResponse, tags=["health"])
 def health() -> HealthResponse:
     return HealthResponse(status="ok", detail="PLS generator ready", config=settings.summary())
 
 
-@router.post("/summarize", response_model=SummarizeResponse)
+@router.post("/summarize", response_model=SummarizeResponse, tags=["summarize"])
 def summarize(request: SummarizeRequest) -> SummarizeResponse:
     overrides = GenerationDefaults(
         min_new_tokens=request.min_new_tokens or settings.generation.min_new_tokens,
@@ -72,7 +87,7 @@ def summarize(request: SummarizeRequest) -> SummarizeResponse:
     )
 
 
-@router.post("/classify", response_model=ClassificationResponse)
+@router.post("/classify", response_model=ClassificationResponse, tags=["classify"])
 def classify_text(request: ClassificationRequest) -> ClassificationResponse:
     result = classifier.predict([request.text])[0]
     return ClassificationResponse(**result)
