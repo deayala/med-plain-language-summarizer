@@ -1,0 +1,21 @@
+source,subset,label,y_true,y_pred,n_chars,path
+Cochrane,test,non_pls,0,1,1990,bridging-the-gap-in-health-literacy-main/data_collection_and_processing/Data Sources/Cochrane/test/non_pls/10.1002-14651858.CD011056.pub2-abstract.txt_accumulated_section5.txt
+ClinicalTrials.gov,test,non_pls,0,1,2763,bridging-the-gap-in-health-literacy-main/data_collection_and_processing/Data Sources/ClinicalTrials.gov/test/NCT01557244.txt_accumulated_section4.txt
+Cochrane,test,non_pls,0,1,1677,bridging-the-gap-in-health-literacy-main/data_collection_and_processing/Data Sources/Cochrane/test/non_pls/10.1002-14651858.CD005972.pub4-abstract.txt_accumulated_section7.txt
+Cochrane,test,pls,1,0,2526,bridging-the-gap-in-health-literacy-main/data_collection_and_processing/Data Sources/Cochrane/test/pls/10.1002-14651858.CD005490.pub2-pls.txt
+Cochrane,test,non_pls,0,1,1778,bridging-the-gap-in-health-literacy-main/data_collection_and_processing/Data Sources/Cochrane/test/non_pls/10.1002-14651858.CD008440-abstract.txt_accumulated_section3.txt
+Cochrane,test,non_pls,0,1,3213,bridging-the-gap-in-health-literacy-main/data_collection_and_processing/Data Sources/Cochrane/test/non_pls/10.1002-14651858.CD006252.pub4-abstract.txt_section2.txt
+Cochrane,test,non_pls,0,1,1958,bridging-the-gap-in-health-literacy-main/data_collection_and_processing/Data Sources/Cochrane/test/non_pls/10.1002-14651858.CD003637.pub3-abstract.txt_accumulated_section9.txt
+ClinicalTrials.gov,test,non_pls,0,1,5494,bridging-the-gap-in-health-literacy-main/data_collection_and_processing/Data Sources/ClinicalTrials.gov/test/NCT01557244.txt_accumulated_section9.txt
+Cochrane,test,non_pls,0,1,1711,bridging-the-gap-in-health-literacy-main/data_collection_and_processing/Data Sources/Cochrane/test/non_pls/10.1002-14651858.CD008451.pub2-abstract.txt_section17.txt
+Cochrane,test,non_pls,0,1,2086,bridging-the-gap-in-health-literacy-main/data_collection_and_processing/Data Sources/Cochrane/test/non_pls/10.1002-14651858.CD008830.pub3-abstract.txt_section2.txt
+ClinicalTrials.gov,test,non_pls,0,1,1766,bridging-the-gap-in-health-literacy-main/data_collection_and_processing/Data Sources/ClinicalTrials.gov/test/NCT01557244.txt_accumulated_section3.txt
+ClinicalTrials.gov,test,non_pls,0,1,4187,bridging-the-gap-in-health-literacy-main/data_collection_and_processing/Data Sources/ClinicalTrials.gov/test/NCT01557244.txt_accumulated_section7.txt
+ClinicalTrials.gov,test,non_pls,0,1,2475,bridging-the-gap-in-health-literacy-main/data_collection_and_processing/Data Sources/ClinicalTrials.gov/test/NCT04476940.txt
+Cochrane,test,non_pls,0,1,2250,bridging-the-gap-in-health-literacy-main/data_collection_and_processing/Data Sources/Cochrane/test/non_pls/10.1002-14651858.CD008830.pub3-abstract.txt_accumulated_section4.txt
+Cochrane,test,non_pls,0,1,2097,bridging-the-gap-in-health-literacy-main/data_collection_and_processing/Data Sources/Cochrane/test/non_pls/10.1002-14651858.CD008830.pub3-abstract.txt_accumulated_section2.txt
+Cochrane,test,non_pls,0,1,2159,bridging-the-gap-in-health-literacy-main/data_collection_and_processing/Data Sources/Cochrane/test/non_pls/10.1002-14651858.CD007507.pub2-abstract.txt_accumulated_section5.txt
+Cochrane,test,non_pls,0,1,2725,bridging-the-gap-in-health-literacy-main/data_collection_and_processing/Data Sources/Cochrane/test/non_pls/10.1002-14651858.CD013407.pub2-abstract.txt_accumulated_section6.txt
+Cochrane,test,non_pls,0,1,1786,bridging-the-gap-in-health-literacy-main/data_collection_and_processing/Data Sources/Cochrane/test/non_pls/10.1002-14651858.CD011056.pub2-abstract.txt_accumulated_section3.txt
+Cochrane,test,pls,1,0,1900,bridging-the-gap-in-health-literacy-main/data_collection_and_processing/Data Sources/Cochrane/test/pls/10.1002-14651858.CD008270.pub2-pls.txt
+ClinicalTrials.gov,test,non_pls,0,1,2420,bridging-the-gap-in-health-literacy-main/data_collection_and_processing/Data Sources/ClinicalTrials.gov/test/NCT04476940.txt_section2.txt

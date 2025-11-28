@@ -1,1 +1,0 @@
-"""AlignScore microservice."""
