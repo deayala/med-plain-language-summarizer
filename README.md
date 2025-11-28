@@ -12,12 +12,10 @@ Este repositorio contiene el código, los datos y los artefactos para el trabajo
 - [Estructura del Repositorio](#estructura-del-repositorio)
 - [Instalación y Requisitos](#instalación-y-requisitos)
 - [Uso y Reproducción de Resultados](#uso-y-reproducción-de-resultados)
-  - [1. Clasificador PLS/no-PLS](#1-clasificador-plsno-pls)
-  - [2. Generación de Resúmenes y Análisis Comparativo](#2-generación-de-resúmenes-y-análisis-comparativo)
 - [Despliegue de la Aplicación](#despliegue-de-la-aplicación)
   - [Guía Visual del Frontend](#guía-visual-del-frontend)
 - [Resultados Clave](#resultados-clave)
-- [Licenciamiento y Uso de MedGemma](#licenciamiento-y-uso-de-medgemma)
+- [Licenciamiento](#licenciamiento)
 
 ---
 
@@ -36,27 +34,21 @@ El sistema final consta de una aplicación web desacoplada que integra los model
 
 ## Estructura del Repositorio
 
-```
-.
-├── README.md                 # Documentación principal del proyecto.
-├── reports/                  # Paper final, figuras, diagramas y gráficos.
-├── data/                     # Datasets curados y resultados de los experimentos.
-├── notebooks/                # Proceso de investigación y experimentación en Jupyter.
-├── models/                   # Artefactos finales de los modelos entrenados.
-└── deployment/               # Código autocontenido para el despliegue de la aplicación.
-```
+A continuación, se describe la organización del repositorio. Cada carpeta principal contiene su propio `README.md` con información detallada.
 
-- **`reports/`**: Contiene el artículo científico (`MAIA - Paper.pdf`) y todas las figuras (`reports/figures/`) usadas en la documentación y el paper.
-- **`data/`**: Almacena los datos de entrada (`fine_tunning/`) y los CSVs con los resultados detallados de los experimentos (`classifier/`).
-- **`notebooks/`**: Documenta el flujo de investigación. Los notebooks están numerados para indicar el orden lógico. Los experimentos descartados se encuentran en `notebooks/archive/`.
-- **`models/`**: Contiene los artefactos de los modelos listos para ser usados: el clasificador (`pls_classifier/`) y los adaptadores LoRA del generador MedGemma (`pls_generator_medgemma/`).
-- **`deployment/`**: Incluye todo lo necesario para la aplicación funcional: API, frontend, servicio AlignScore, configuración de Docker e infraestructura como código con Terraform.
+| Carpeta | Descripción | Guía Detallada |
+| :--- | :--- | :--- |
+| **`reports/`** | Contiene el artículo científico (`MAIA - Paper.pdf`) y todas las figuras y diagramas. | N/A |
+| **`data/`** | Almacena los datasets de entrada y los resultados tabulados de los experimentos. | **[`data/README.md`](data/README.md)** |
+| **`notebooks/`** | Documenta el flujo de investigación, entrenamiento y evaluación de modelos. | **[`notebooks/README.md`](notebooks/README.md)** |
+| **`models/`** | Contiene los artefactos finales y entrenados de los modelos (clasificador y generador). | **[`models/README.md`](models/README.md)** |
+| **`deployment/`**| Incluye todo el código para el despliegue de la aplicación (API, UI, Infraestructura). | **[`deployment/README.md`](deployment/README.md)** |
 
 ---
 
 ## Instalación y Requisitos
 
-Para reproducir los experimentos de investigación, clona el repositorio y asegúrate de tener un entorno de Python 3.10+ y Jupyter. Las dependencias específicas se encuentran en los propios notebooks.
+Para reproducir los experimentos de investigación, clona el repositorio y asegúrate de tener un entorno de Python 3.10+ y Jupyter. Las dependencias específicas se detallan en los propios notebooks.
 
 ```bash
 git clone https://github.com/deayala/med-plain-language-summarizer.git
@@ -69,26 +61,17 @@ Para el despliegue de la aplicación, consulta la guía detallada en [`deploymen
 
 ## Uso y Reproducción de Resultados
 
-Los notebooks principales guían a través del proceso de investigación y modelado.
+Los notebooks principales guían a través del proceso de investigación y modelado. Para una descripción más profunda de cada uno, consulta la [guía de notebooks](notebooks/README.md).
 
-### 1. Clasificador PLS/no-PLS
-El entrenamiento y la evaluación del clasificador binario se detallan en:
-- **`notebooks/2_pls_classifier.ipynb`**
-
-Este notebook genera el modelo final que se almacena en `models/pls_classifier/`.
-
-### 2. Generación de Resúmenes y Análisis Comparativo
-El proceso completo, desde el fine-tuning de MedGemma hasta la evaluación cuantitativa y cualitativa contra modelos SOTA (State-Of-The-Art), está consolidado en el notebook principal:
-- **`notebooks/1_pls_generator_finetuning.ipynb`**
-
-El adaptador LoRA resultante se encuentra en `models/pls_generator_medgemma/` y está listo para ser usado.
+-   **`notebooks/1_pls_generator_finetuning.ipynb`**: Notebook maestro que consolida el fine-tuning de MedGemma y el análisis comparativo con modelos SOTA.
+-   **`notebooks/2_pls_classifier.ipynb`**: Notebook dedicado al entrenamiento y evaluación del clasificador de estilo PLS.
 
 ---
 
 ## Despliegue de la Aplicación
 
 Las instrucciones técnicas para construir las imágenes de Docker, provisionar la infraestructura en AWS y lanzar la aplicación se encuentran en la guía de despliegue:
-- **[Guía de Despliegue](deployment/README.md)**
+-   **[Guía de Despliegue](deployment/README.md)**
 
 ### Guía Visual del Frontend
 
@@ -113,18 +96,20 @@ La interfaz de usuario es intuitiva y se concentra en una única vista para faci
 
 ## Resultados Clave
 
-- El clasificador TF-IDF + Regresión Logística alcanzó un **F1-score de 0.997** en el conjunto de prueba, demostrando ser una solución eficiente y precisa para la identificación de estilo.
-- El modelo **MedGemma afinado** superó cualitativamente a otros modelos compactos, logrando un balance superior entre factualidad y legibilidad. Notablemente, **logró generar resúmenes legibles para un nivel de 8º grado en el 47% de los casos, en comparación con el 0% de los resúmenes de referencia escritos por humanos**.
-- La comparativa demuestra que los modelos compactos afinados (SLMs) son una alternativa viable y de bajo costo a los grandes modelos comerciales para tareas especializadas, promoviendo los principios de **IA Sostenible (Green AI)** sin sacrificar la calidad.
+-   El clasificador TF-IDF + Regresión Logística alcanzó un **F1-score de 0.997** en el conjunto de prueba, demostrando ser una solución eficiente y precisa para la identificación de estilo.
+-   El modelo **MedGemma afinado** superó cualitativamente a otros modelos compactos, logrando un balance superior entre factualidad y legibilidad. Notablemente, **logró generar resúmenes legibles para un nivel de 8º grado en el 47% de los casos, en comparación con el 0% de los resúmenes de referencia escritos por humanos**.
+-   La comparativa demuestra que los modelos compactos afinados (SLMs) son una alternativa viable y de bajo costo a los grandes modelos comerciales para tareas especializadas, promoviendo los principios de **IA Sostenible (Green AI)** sin sacrificar la calidad.
 
 ---
 
-## Licenciamiento y Uso de MedGemma
+## Licenciamiento
 
-MedGemma es un modelo abierto basado en Gemma 3 publicado para acelerar aplicaciones médicas. Su uso en este proyecto se adhiere a los términos de *Health AI Developer Foundations*:
+El código, notebooks, despliegue y artefactos propios del equipo se publican bajo licencia MIT (ver [LICENSE](LICENSE)). Puedes reutilizarlos y modificarlos libremente manteniendo el aviso de copyright.
 
-- **Uso previsto**: Punto de partida para aplicaciones de salud y biociencias.
-- **No es clínico listo**: Las salidas son preliminares y no deben guiar decisiones clínicas sin validación humana experta.
-- **Validación obligatoria**: Es crucial evaluar el modelo en datos representativos del contexto de uso específico.
-- **Sensibilidad al prompt**: La calidad de la salida puede variar significativamente con pequeños cambios en las instrucciones. Es necesario un proceso iterativo de diseño de prompts.
-- **Cumplimiento**: Revisa los términos oficiales antes de cualquier uso productivo: [https://developers.google.com/health-ai-developer-foundations/medgemma](https://developers.google.com/health-ai-developer-foundations/medgemma)
+MedGemma es un modelo abierto basado en Gemma 3 publicado para acelerar aplicaciones médicas. Su uso en este proyecto se adhiere a los términos de *Health AI Developer Foundations* y no altera la licencia del modelo base:
+
+-   **Uso previsto**: Punto de partida para aplicaciones de salud y biociencias.
+-   **No es clínico listo**: Las salidas son preliminares y no deben guiar decisiones clínicas sin validación humana experta.
+-   **Validación obligatoria**: Es crucial evaluar el modelo en datos representativos del contexto de uso específico.
+-   **Sensibilidad al prompt**: La calidad de la salida puede variar significativamente con pequeños cambios en las instrucciones. Es necesario un proceso iterativo de diseño de prompts.
+-   **Cumplimiento**: Revisa los términos oficiales antes de cualquier uso productivo: [https://developers.google.com/health-ai-developer-foundations/medgemma](https://developers.google.com/health-ai-developer-foundations/medgemma)
