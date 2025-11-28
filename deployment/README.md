@@ -82,7 +82,7 @@ Los siguientes comandos debe ejecutarse en el mismo directorio donde se encuentr
    cp .env.example .env
    export AWS_REGION=us-east-1
    export HF_TOKEN=hf_xxx
-   export HF_ENDPOINT_URL=https://xxx.aws.endpoints.huggingface.cloud
+   export HF_ENDPOINT_URL=https://xxx.aws.endpoints.huggingface.cloud/v1/chat/completions
    export HF_CHAT_MODEL_NAME=deayala/med-gemma-finetuned  # solo para endpoints /chat/completions
    ```
    Usa `DRY_RUN=1` si no tienes endpoint HF pero quieres probar la API.
